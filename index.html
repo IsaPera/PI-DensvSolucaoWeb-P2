@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas Compras</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" type="image/x-icon" href="imagens/cesta.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="iphone-frame">
+        <div class="iphone-status-bar">
+            <span id="relogio-ao-vivo">12:00</span>
+            <div class="entalhe"></div>
+            <span class="status-direita">📶 🛜 🔋</span>
+        </div>
+
+        <div class="barra-navegador">
+            <span id="url-navegador">minhascompras.com.br</span>
+            <span class="botao-atualizar">↻</span>
+        </div>
+
+        <div id="app-viewport">
+            <div id="tela-inicio" class="app-tela fundo-branco ativo">
+                <div class="inicio-destaque">
+                    <img src="imagens/cesta.png" alt="Cesta de Compras" class="inicio-imagem-cesta">
+                    <h1>Minhas Compras</h1>
+                    <p>Organize sua despensa e suas compras facilmente.</p>
+                </div>
+
+                <div class="inicio-lista-cartoes">
+                    <div class="cartao-menu" onclick="mudarTela('despensa')">
+                        <div class="cartao-circulo-icone">
+                            <img src="imagens/despensa.png" alt="Despensa">
+                        </div>
+                        <div class="cartao-textos">
+                            <h3>Despensa</h3>
+                            <p>Controle seus produtos estocados</p>
+                        </div>
+                        <span class="seta-indicador">➤</span>
+                    </div>
+
+                    <div class="cartao-menu" onclick="mudarTela('lista')">
+                        <div class="cartao-circulo-icone">
+                            <img src="imagens/lista.png" alt="Lista">
+                        </div>
+                        <div class="cartao-textos">
+                            <h3>Lista de Compras</h3>
+                            <p>Itens que você precisa comprar</p>
+                        </div>
+                        <span class="seta-indicador">➤</span>
+                    </div>
+
+                    <div class="cartao-menu" onclick="mudarTela('comprados')">
+                        <div class="cartao-circulo-icone">
+                            <img src="imagens/comprados.png" alt="Comprados">
+                        </div>
+                        <div class="cartao-textos">
+                            <h3>Comprados</h3>
+                            <p>Confirme os dados dos itens comprados</p>
+                        </div>
+                        <span class="seta-indicador">➤</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tela-despensa" class="app-tela fundo-branco pagina-largura-total">
+                <div class="cabecalho-verde-topo">
+                    <div class="titulo-com-voltar">
+                        <span class="seta-voltar" onclick="mudarTela('inicio')"> ⮜ </span>
+                        <h2 class="titulo-pagina-simples">Despensa</h2>
+                    </div>
+
+                    <div class="caixa-busca-envoltoria">
+                        <span class="icone-lupa">🔎︎</span>
+                        <input type="text" id="busca-despensa" placeholder="Buscar produto..." oninput="filtrarDespensa()">
+                    </div>
+
+                    <div class="linha-botoes-filtro">
+                        <button class="botao-chip ativo" onclick="filtrarStatus('todos', this)">Todos</button>
+                        <button class="botao-chip" onclick="filtrarStatus('estoque', this)">Em estoque</button>
+                        <button class="botao-chip" onclick="filtrarStatus('finalizando', this)">Finalizando</button>
+                        <button class="botao-chip" onclick="filtrarStatus('falta', this)">Em falta</button>
+                    </div>
+                </div>
+
+                <div id="lista-despensa-container" class="lista-largura-total">
+                </div>
+            </div>
+
+            <div id="tela-lista" class="app-tela fundo-branco">
+                <div class="cabecalho-verde-topo">
+                    <div class="titulo-com-voltar">
+                        <span class="seta-voltar" onclick="mudarTela('inicio')"> ⮜ </span>
+                        <h2 class="titulo-pagina-simples">Lista de Compras</h2>
+                    </div>
+                    <div class="bloco-data-compra">
+                        <span>Data da compra:</span>
+                        <input type="date" id="input-data-compra">
+                    </div>
+                </div>
+
+                <div style="padding: 14px;">
+                    <div class="container-adicionar-linha">
+                        <input type="text" id="novo-item-lista" placeholder="Novo item...">
+                        <button onclick="adicionarNaLista()">Adicionar</button>
+                    </div>
+
+                    <div id="lista-compras-container" class="estilo-lista-anotacoes">
+                    </div>
+                </div>
+            </div>
+
+            <div id="tela-comprados" class="app-tela fundo-verde">
+                <div class="cabecalho-verde-topo">
+                    <div class="titulo-com-voltar">
+                        <span class="seta-voltar" onclick="mudarTela('inicio')"> ⮜ </span>
+                        <h2 class="titulo-pagina-simples">Comprados</h2>
+                    </div>
+                </div>
+
+                <div id="lista-comprados-container" class="lista-comprados-sem-borda">
+                </div>
+            </div>
+        </div>
+
+        <div id="barra-inferior" class="barra-abas-inferior fundo-barra-verde">
+            <button class="botao-navegacao-aba ativo" onclick="mudarTela('inicio')">
+                <img src="imagens/inicio.png" alt="Início">
+                <span>Início</span>
+            </button>
+            <button class="botao-navegacao-aba" onclick="mudarTela('despensa')">
+                <img src="imagens/despensa.png" alt="Despensa">
+                <span>Despensa</span>
+            </button>
+            <button class="botao-navegacao-aba" onclick="mudarTela('lista')">
+                <img src="imagens/lista.png" alt="Lista">
+                <span>Lista de <br> compras</span>
+            </button>
+            <button class="botao-navegacao-aba" onclick="mudarTela('comprados')">
+                <img src="imagens/comprados.png" alt="Comprados">
+                <span>Comprados</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="modal-acao-despensa" class="sobreposicao-modal">
+        <div class="caixa-conteudo-modal">
+            <span class="botao-fechar-modal" onclick="fecharModalAcao()">&times;</span>
+            <h3 id="modal-produto-nome" style="margin-bottom: 15px;">Produto</h3>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="botao-adicionar-despensa" onclick="enviarDaDespensaParaLista()">Enviar para a Lista de Compras</button>
+                <button class="botao-adicionar-despensa" onclick="enviarDaDespensaParaComprados()">Mover para Comprados</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
