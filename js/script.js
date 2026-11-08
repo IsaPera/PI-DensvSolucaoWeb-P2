@@ -3,8 +3,7 @@ let produtos = JSON.parse(localStorage.getItem('minhas_compras_produtos')) || [
     { id: 2, nome: 'Feijão', unidade: '1kg', categoria: 'Alimentos', status: 'falta', duracao: '2 semanas', atualizacao: '01/10/2026' },
      { id: 3, nome: 'Peito de frango', unidade: '2kg', categoria: 'Alimentos', status: 'estoque', duracao: '3 semanas', atualizacao: '11/10/2026' },
     { id: 4, nome: 'Farinha de Trigo', unidade: '1kg', categoria: 'Alimentos', status: 'finalizando', duracao: '1 mês', atualizacao: '20/09/2026' },
-    { id: 5, nome: 'Ovos', unidade: '1 caixa c/10', categoria: 'Alimentos', status: 'estoque', duracao: '3 semanas', atualizacao: '12/10/2026' },
-    { id: 6, nome: 'Atum', unidade: '1 lata', categoria: 'Alimentos', status: 'estoque', duracao: '2 semanas', atualizacao: '13/10/2026' }
+    { id: 5, nome: 'Ovos', unidade: '1 caixa c/10', categoria: 'Alimentos', status: 'estoque', duracao: '3 semanas', atualizacao: '12/10/2026' }
 ];
 
 let listaCompras = JSON.parse(localStorage.getItem('minhas_compras_lista')) || [

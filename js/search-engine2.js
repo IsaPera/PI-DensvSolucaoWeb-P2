@@ -84,6 +84,7 @@ for (list in lists) {
     // código para sortear os textos primeiro por quantidade de palavras e depois alfabeticamente
     lists[list] = sortWords(sortWordsByNumber(lists[list], attributes[list]),attributes[list])
     podeir.push(true)
+    console.log('list2',lists[list])
 }
 
 new Promise((carregou) => {
@@ -101,8 +102,10 @@ new Promise((carregou) => {
 // Quando uma tecla é pressionada na barra de pesquisa/Navegação por teclado
 function startEngine() {
     console.log('aaa',document.getElementsByClassName(class_searcher))
+    console.log('lists[0]',lists[0])
 for (let s = 0; s < document.getElementsByClassName(class_searcher).length; s++) {
     pstate.push([])
+    lists[s] = sortWords(sortWordsByNumber(lists[list], attributes[list]),attributes[list])
     search2(lists[s], attributes[s], s, pesquisas[s])
         
 }
@@ -224,7 +227,7 @@ function search2(subjects,titleProperty,searcherIndex,pesquisa) {
     // índice em 'abacate' = 0
     // índice em 'tangerina' = 1
     subjects = sortob(subjects, 'index_found')
-    //console.log('SUBJECTS',subjects)
+    console.log('SUBJECTS',subjects)
 
    // window.alert(allvidholders.length)
    if (pesquisa.length == 0) {
@@ -246,26 +249,8 @@ function search2(subjects,titleProperty,searcherIndex,pesquisa) {
          if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquise}`,"gi")) != -1 && pesquise.length != 0) {
              results.push(subjects[n])
              this.pnumber++
-             this.psearcher = document.createElement('p')
-             this.psearcher.style.position = 'sticky'
-             this.psearcher.innerText = subjects[n][titleProperty]
-             this.psearcher.setAttribute('class', 'psearcher')
-             this.psearcher.id = 'a' + subjects[n].original_index
-             this.psearcher.style.fontWeight = 'bold'
-             this.psearcher.setAttribute('onclick', `dothesearch(${this.psearcher.id.replace('a', '')},${searcherIndex},'${titleProperty}')`)
-             this.psearcher.setAttribute('onmouseenter', `entrou(${this.pnumber},${searcherIndex})`)
-             this.psearcher.setAttribute('onmouseleave', `saiu(${this.pnumber},${searcherIndex})`)
-             this.d = document.createElement('span')
-             //this.d.innerText = 'o'
-             this.d.setAttribute('onmouseenter', `entrou(${this.pnumber},${searcherIndex})`)
-             this.d.setAttribute('class','phelp')
 
-             this.psearcher.innerHTML = this.psearcher.innerHTML.replace(new RegExp(`(?<=^|\\W)${pesquise}`,"gi"), `<span style="font-weight:normal;color:yellow">${pesquise}</span>`)
-             if (this.pnumber < 7) {
-             pholder.appendChild(this.psearcher)
-             pholder.getElementsByClassName('psearcher')[this.pnumber].appendChild(this.d)
-             pstate[searcherIndex].push({p_id:pnumber,onhover:false})
-             }
+             //this.psearcher.innerHTML = this.psearcher.innerHTML.replace(new RegExp(`(?<=^|\\W)${pesquise}`,"gi"), `<span style="font-weight:normal;color:yellow">${pesquise}</span>`)
              this.opnumbers++
              pholder.style.display = 'block'
          } }
@@ -277,26 +262,10 @@ function search2(subjects,titleProperty,searcherIndex,pesquisa) {
              if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquise}`,"gi")) == -1 && subjects[n][titleProperty].search(new RegExp(`(?<![a-z])${pesquise}`,"gi")) != -1 && pesquise.length != 0) {
                 results.push(subjects[n])
                 this.pnumber++
-                this.psearcher = document.createElement('p')
-                 this.psearcher.style.position = 'sticky'
-                 this.psearcher.innerText = subjects[n][titleProperty]
-                 this.psearcher.setAttribute('class', 'psearcher')
-                 this.psearcher.id = 'a' + subjects[n].original_index
-                 this.psearcher.style.fontWeight = 'bold'
-                 this.psearcher.setAttribute('onclick', `dothesearch(${this.psearcher.id.replace('a', '')},${searcherIndex},'${titleProperty}')`)
-                 this.psearcher.setAttribute('onmouseenter', `entrou(${this.pnumber},${searcherIndex})`)
-                 this.psearcher.setAttribute('onmouseleave', `saiu(${this.pnumber},${searcherIndex})`)
-                 this.d = document.createElement('span')
-                 this.d.setAttribute('onmouseenter', `entrou(${this.pnumber},${searcherIndex})`)
                  //this.d.innerText = 'o'
                  this.d.setAttribute('class','phelp')
 
-                 this.psearcher.innerHTML = this.psearcher.innerHTML.replace(new RegExp(`(?<=\\W)${pesquise}`,"gi"), `<span style="font-weight:normal;color:yellow">${pesquise}</span>`)
-                 if (this.pnumber < 7) {
-                    pholder.appendChild(this.psearcher)
-                    pholder.getElementsByClassName('psearcher')[this.pnumber].appendChild(this.d)
-                    pstate[searcherIndex].push({p_id:pnumber,onhover:false})
-                    }
+                 //this.psearcher.innerHTML = this.psearcher.innerHTML.replace(new RegExp(`(?<=\\W)${pesquise}`,"gi"), `<span style="font-weight:normal;color:yellow">${pesquise}</span>`)
                  this.opnumbers++
                  pholder.style.display = 'block'
              }}}
@@ -310,26 +279,8 @@ function search2(subjects,titleProperty,searcherIndex,pesquisa) {
             console.log('FOI ESSE',subjects[n][titleProperty])
             results.push(subjects[n])
             this.pnumber++
-             this.psearcher = document.createElement('p')
-             this.psearcher.style.position = 'sticky'
-             this.psearcher.innerText = subjects[n][titleProperty]
-             this.psearcher.setAttribute('class', 'psearcher')
-             this.psearcher.id = 'a' + subjects[n].original_index
-             this.psearcher.style.fontWeight = 'bold'
-             this.psearcher.setAttribute('onclick', `dothesearch(${this.psearcher.id.replace('a', '')},${searcherIndex},'${titleProperty}')`)
-             this.psearcher.setAttribute('onmouseenter', `entrou(${this.pnumber},${searcherIndex})`)
-             this.psearcher.setAttribute('onmouseleave', `saiu(${this.pnumber},${searcherIndex})`)
-             this.d = document.createElement('span')
-             this.d.setAttribute('onmouseenter', `entrou(${this.pnumber},${searcherIndex})`)
-             //this.d.innerText = 'o'
-             this.d.setAttribute('class','phelp')
 
-             this.psearcher.innerHTML = this.psearcher.innerHTML.replace(new RegExp(`${pesquise}`,"gi"), `<span style="font-weight:normal;color:yellow">${pesquise}</span>`)
-             if (this.pnumber < 7) {
-                pholder.appendChild(this.psearcher)
-                pholder.getElementsByClassName('psearcher')[this.pnumber].appendChild(this.d)
-                pstate[searcherIndex].push({p_id:pnumber,onhover:false})
-                }
+             //this.psearcher.innerHTML = this.psearcher.innerHTML.replace(new RegExp(`${pesquise}`,"gi"), `<span style="font-weight:normal;color:yellow">${pesquise}</span>`)
              this.opnumbers++
              pholder.style.display = 'block'
          }}}
