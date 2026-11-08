@@ -17,19 +17,10 @@ for (list in lists) {
     console.log('list2',lists[list])
 }
 
-new Promise((carregou) => {
-    window.addEventListener('load',() => {
-        carregou('carreegou')
-    })
-    
-}).then(answer => {
-    console.log(answer)
-    startEngine()
-})
+startEngine()
 
 }
 
-// Quando uma tecla é pressionada na barra de pesquisa/Navegação por teclado
 function startEngine() {
     console.log('lists[0]',lists[0])
 for (let s = 0; s < lists.length; s++) {
@@ -41,9 +32,9 @@ for (let s = 0; s < lists.length; s++) {
 }
 
 
-// Cada vez que o usuário digita um caractere na barra de pesquisa
-function search2(subjects,titleProperty,searcherIndex,pesquisa) {   
-    console.log('LOGGG',subjects)
+function search2(opcoes,titleProperty,searcherIndex,pesquisa) {   
+    console.log('LOGGG',opcoes)
+    subjects = [...opcoes]
     window.results = []
     pstate[searcherIndex] = []
     pselected[searcherIndex] = -1
@@ -67,14 +58,17 @@ function search2(subjects,titleProperty,searcherIndex,pesquisa) {
 
     for (n in subjects) { 
          pesquise = pesquisa.toLowerCase()
+         //subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquise,'(?<=^|\\W)')
          if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquise}`,"gi")) != -1 && pesquise.length != 0) {
              results.push(subjects[n])
+             subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquise,'(?<=^|\\W)')
          } }
     if (pesquise.length != 0) {
         for (n in subjects) {
              pesquise = pesquisa.toLowerCase()
              if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquise}`,"gi")) == -1 && subjects[n][titleProperty].search(new RegExp(`(?<![a-z])${pesquise}`,"gi")) != -1 && pesquise.length != 0) {
                 results.push(subjects[n])
+                subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquise,'(?<=\\W)')
              }}}
  if (pesquise.length != 0){
     for (n in subjects) {
@@ -82,7 +76,10 @@ function search2(subjects,titleProperty,searcherIndex,pesquisa) {
          if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquise}`,"gi")) == -1 && subjects[n][titleProperty].search(new RegExp(`(?<![a-z])${pesquise}`,"gi")) == -1 && subjects[n][titleProperty].search(new RegExp(`${pesquise}`,"gi")) != -1 && pesquise.length != 0) {
             console.log('FOI ESSE',subjects[n][titleProperty])
             results.push(subjects[n])
+            subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquise,'')
          }}}
+
+         console.log('results',results)
  }
 
 
@@ -261,3 +258,38 @@ for (palavra in palavrasPrimitivas) {
 palavrasPrimitivas = sortob(palavrasPrimitivas,'words_number')
 return palavrasPrimitivas
 }
+
+function searchInnertext(text,busca,search_regex) {
+
+let text_changed = text.replace(new RegExp(`${search_regex}${busca}`,"gi"), `/${busca}`)
+let indexes = []
+let innertext = ''
+let countindex = 0
+
+for (char = 0; char < text_changed.length; char++) {
+    if (text_changed[char] == '/') {
+        if (char > 0) {
+          trecho = text_changed[char - 1] + text_changed.slice(char + 1, char + 1 + busca.length)
+        }else{
+          trecho = text_changed.slice(char + 1, char + 1 + busca.length)
+        }
+         if (trecho.search(new RegExp(`${search_regex}${busca}`,"gi")) != -1) {
+         indexes.push(char - countindex)
+         countindex++
+         }
+    }
+}
+
+for (char = 0; char < text.length; char++) {
+    if (indexes.indexOf(Number(char)) == -1) {
+        innertext += text[char]
+    }else{
+        innertext += `<span style="font-weight: 600;">${text.slice(Number(char),Number(char) + Number(busca.length))}</span>`
+        char += busca.length - 1
+    }
+}
+return innertext
+}
+
+// (?<=\\W)
+// (?<=^|\\W)

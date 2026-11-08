@@ -138,7 +138,6 @@ function renderDespensa(filtroTexto = '') {
     });
 
     createLists([produtos],['nome'],[filtroTexto])
-    startEngine()
 
     console.log(filtroAtualStatus)
     if (filtroTexto != '') {
@@ -169,6 +168,13 @@ function renderDespensa(filtroTexto = '') {
     }
 
     filtrados.forEach(produto => {
+        console.log('produto: ',produto, produto.innertext == undefined)
+        let nome
+        if (produto.innertext == undefined || filtroTexto == '') {
+            nome = produto.nome
+        }else{
+            nome = produto.innertext
+        }
         let bolinha = produto.status === 'estoque' ? '🟢' : produto.status === 'finalizando' ? '🟡' : '🔴';
         let nomeSlug = produto.nome.toLowerCase().replace(/\s+/g, '-');
         let dataExibicao = produto.atualizacao ? produto.atualizacao.substring(0, 5) : '10/08';
@@ -180,7 +186,7 @@ function renderDespensa(filtroTexto = '') {
                         <img src="imagens/${nomeSlug}.png" alt="${produto.nome}">
                     </div>
                     <div class="despensa-item-details">
-                        <h4>${produto.nome}</h4>
+                        <h4>${nome}</h4>
                         <p>${produto.unidade}<br>Última atualização: ${dataExibicao}<br>${bolinha} ${produto.duracaoCalculada}</p>
                     </div>
                 </div>
