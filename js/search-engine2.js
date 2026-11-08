@@ -47,8 +47,6 @@ function search2(subjects,titleProperty,searcherIndex,pesquisa) {
     window.results = []
     pstate[searcherIndex] = []
     pselected[searcherIndex] = -1
-    this.pnumber = -1
-    this.opnumbers = 0
 
       for (n in subjects) {
         //console.log('www',subjects[n][titleProperty].search(new RegExp(`${pesquisa}`,"gi")))
@@ -67,23 +65,16 @@ function search2(subjects,titleProperty,searcherIndex,pesquisa) {
     subjects = sortob(subjects, 'index_found')
     console.log('SUBJECTS',subjects)
 
-
-   this.opnumbers = 0
     for (n in subjects) { 
          pesquise = pesquisa.toLowerCase()
          if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquise}`,"gi")) != -1 && pesquise.length != 0) {
              results.push(subjects[n])
-             this.pnumber++
-             this.opnumbers++
          } }
     if (pesquise.length != 0) {
         for (n in subjects) {
              pesquise = pesquisa.toLowerCase()
              if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquise}`,"gi")) == -1 && subjects[n][titleProperty].search(new RegExp(`(?<![a-z])${pesquise}`,"gi")) != -1 && pesquise.length != 0) {
                 results.push(subjects[n])
-                this.pnumber++
-
-                 this.opnumbers++
              }}}
  if (pesquise.length != 0){
     for (n in subjects) {
@@ -91,9 +82,6 @@ function search2(subjects,titleProperty,searcherIndex,pesquisa) {
          if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquise}`,"gi")) == -1 && subjects[n][titleProperty].search(new RegExp(`(?<![a-z])${pesquise}`,"gi")) == -1 && subjects[n][titleProperty].search(new RegExp(`${pesquise}`,"gi")) != -1 && pesquise.length != 0) {
             console.log('FOI ESSE',subjects[n][titleProperty])
             results.push(subjects[n])
-            this.pnumber++
-
-             this.opnumbers++
          }}}
  }
 
