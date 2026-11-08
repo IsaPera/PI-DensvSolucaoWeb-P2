@@ -137,15 +137,33 @@ function renderDespensa(filtroTexto = '') {
         produto.status = calculo.status;
         produto.duracaoCalculada = calculo.texto;
     });
-    let filtrados = produtos.filter(produto => {
-        let combinaTexto = produto.nome.toLowerCase().includes(filtroTexto.toLowerCase());
+
+    createLists([produtos],['nome'],[filtroTexto])
+    startEngine()
+
+    console.log(filtroAtualStatus)
+    if (filtroTexto != '') {
+    window.filtrados = results.filter(produto => {
+        let combinaTexto = true
         let combinaStatus = filtroAtualStatus === 'todos' || produto.status === filtroAtualStatus;
         return combinaTexto && combinaStatus;
     });
+    }else{
+    
+    window.filtrados = produtos.filter(produto => {
+        let combinaTexto = produto.nome.toLowerCase().includes(filtroTexto.toLowerCase())
+        let combinaStatus = filtroAtualStatus === 'todos' || produto.status === filtroAtualStatus;
+        return combinaTexto && combinaStatus;
+    });
+
+    console.log('1aaaaaaaaaa',filtrados)
+    }
+
     if (filtroAtualStatus === 'todos') {
         let pesoStatus = { 'falta': 1, 'finalizando': 2, 'estoque': 3 };
         filtrados.sort((a, b) => pesoStatus[a.status] - pesoStatus[b.status]);
     }
+
     if (filtrados.length === 0) {
         container.innerHTML = '<p style="text-align:center; color:#555; font-size:0.85rem; padding:15px;">Nenhum produto encontrado.</p>';
         return;
