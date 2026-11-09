@@ -1,10 +1,9 @@
 let produtos = JSON.parse(localStorage.getItem('minhas_compras_produtos')) || [
     { id: 1, nome: 'Arroz', unidade: '1kg', categoria: 'Alimentos', status: 'falta', duracao: '1 semana', atualizacao: '10/10/2026' },
     { id: 2, nome: 'Feijão', unidade: '1kg', categoria: 'Alimentos', status: 'falta', duracao: '2 semanas', atualizacao: '01/10/2026' },
-    { id: 3, nome: 'Farinha de Trigo', unidade: '1kg', categoria: 'Alimentos', status: 'finalizando', duracao: '1 mês', atualizacao: '20/09/2026' },
-    { id: 4, nome: 'Ovos', unidade: '1 caixa c/10', categoria: 'Alimentos', status: 'estoque', duracao: '3 semanas', atualizacao: '12/10/2026' },
-    { id: 5, nome: 'Peito de frango', unidade: '2kg', categoria: 'Alimentos', status: 'estoque', duracao: '3 semanas', atualizacao: '11/10/2026' },
-    { id: 6, nome: 'Atum', unidade: '1 lata', categoria: 'Alimentos', status: 'estoque', duracao: '2 semanas', atualizacao: '13/10/2026' }
+     { id: 3, nome: 'Peito de frango', unidade: '2kg', categoria: 'Alimentos', status: 'estoque', duracao: '3 semanas', atualizacao: '11/10/2026' },
+    { id: 4, nome: 'Farinha de Trigo', unidade: '1kg', categoria: 'Alimentos', status: 'finalizando', duracao: '1 mês', atualizacao: '20/09/2026' },
+    { id: 5, nome: 'Ovos', unidade: '1 caixa c/10', categoria: 'Alimentos', status: 'estoque', duracao: '3 semanas', atualizacao: '12/10/2026' }
 ];
 
 let listaCompras = JSON.parse(localStorage.getItem('minhas_compras_lista')) || [
@@ -137,21 +136,45 @@ function renderDespensa(filtroTexto = '') {
         produto.status = calculo.status;
         produto.duracaoCalculada = calculo.texto;
     });
-    let filtrados = produtos.filter(produto => {
-        let combinaTexto = produto.nome.toLowerCase().includes(filtroTexto.toLowerCase());
+
+    createLists([produtos],['nome'],[filtroTexto])
+
+    console.log(filtroAtualStatus)
+    if (filtroTexto != '') {
+    window.filtrados = results.filter(produto => {
+        let combinaTexto = true
         let combinaStatus = filtroAtualStatus === 'todos' || produto.status === filtroAtualStatus;
         return combinaTexto && combinaStatus;
     });
+    }else{
+    
+    window.filtrados = produtos.filter(produto => {
+        let combinaTexto = produto.nome.toLowerCase().includes(filtroTexto.toLowerCase())
+        let combinaStatus = filtroAtualStatus === 'todos' || produto.status === filtroAtualStatus;
+        return combinaTexto && combinaStatus;
+    });
+
+    console.log('1aaaaaaaaaa',filtrados)
+    }
+
     if (filtroAtualStatus === 'todos') {
         let pesoStatus = { 'falta': 1, 'finalizando': 2, 'estoque': 3 };
         filtrados.sort((a, b) => pesoStatus[a.status] - pesoStatus[b.status]);
     }
+
     if (filtrados.length === 0) {
         container.innerHTML = '<p style="text-align:center; color:#555; font-size:0.85rem; padding:15px;">Nenhum produto encontrado.</p>';
         return;
     }
 
     filtrados.forEach(produto => {
+        console.log('produto: ',produto, produto.innertext == undefined)
+        let nome
+        if (produto.innertext == undefined || filtroTexto == '') {
+            nome = produto.nome
+        }else{
+            nome = produto.innertext
+        }
         let bolinha = produto.status === 'estoque' ? '🟢' : produto.status === 'finalizando' ? '🟡' : '🔴';
         let nomeSlug = produto.nome.toLowerCase().replace(/\s+/g, '-');
         let dataExibicao = produto.atualizacao ? produto.atualizacao.substring(0, 5) : '10/08';
@@ -163,7 +186,7 @@ function renderDespensa(filtroTexto = '') {
                         <img src="imagens/${nomeSlug}.png" alt="${produto.nome}">
                     </div>
                     <div class="despensa-item-details">
-                        <h4>${produto.nome}</h4>
+                        <h4>${nome}</h4>
                         <p>${produto.unidade}<br>Última atualização: ${dataExibicao}<br>${bolinha} ${produto.duracaoCalculada}</p>
                     </div>
                 </div>
