@@ -26,6 +26,7 @@ let listaCompras = JSON.parse(localStorage.getItem('minhas_compras_lista')) || [
 
 let filtroAtualStatus = 'todos';
 let produtoSelecionadoId = null;
+let modalCompradoAtual = null;
 
 function atualizarRelogio() {
     let elementoRelogio = document.getElementById('relogio-ao-vivo');
@@ -67,6 +68,7 @@ function mudarTela(idAba) {
     if (idAba === 'despensa') renderDespensa();
     if (idAba === 'lista') renderListaCompras();
     if (idAba === 'comprados') renderComprados();
+    atualizarAlertasComprados();
 }
 
 function salvarDados() {
@@ -85,7 +87,8 @@ function calcularStatusDinamico(produto) {
 
     let dataAtualizacao = new Date(ano, mes, dia);
     let hoje = new Date();
-    
+    hoje.setHours(0, 0, 0, 0);
+
     let diffEmDias = Math.floor((hoje - dataAtualizacao) / (1000 * 60 * 60 * 24));
     let duracaoDias = 14; 
     let duracaoStr = (produto.duracao || '').toLowerCase();
@@ -113,6 +116,13 @@ function calcularStatusDinamico(produto) {
     else if (duracaoStr.includes('1 ano')) duracaoDias = 365;
 
     let diasRestantes = duracaoDias - diffEmDias;
+
+    if (produto.validade && /^\d{4}-\d{2}-\d{2}$/.test(produto.validade)) {
+        let [anoValidade, mesValidade, diaValidade] = produto.validade.split('-').map(Number);
+        let dataValidade = new Date(anoValidade, mesValidade - 1, diaValidade);
+        let diasAteValidade = Math.round((dataValidade - hoje) / (1000 * 60 * 60 * 24));
+        diasRestantes = Math.min(diasRestantes, diasAteValidade);
+    }
 
     let status = 'estoque';
     if (diasRestantes < 6) {
@@ -178,6 +188,7 @@ function renderDespensa(filtroTexto = '') {
         let bolinha = produto.status === 'estoque' ? '🟢' : produto.status === 'finalizando' ? '🟡' : '🔴';
         let nomeSlug = produto.nome.toLowerCase().replace(/\s+/g, '-');
         let dataExibicao = produto.atualizacao ? produto.atualizacao.substring(0, 5) : '10/08';
+        let validadeExibicao = produto.validade ? '<br>Validade: ' + formatarDataISO(produto.validade) : '';
 
         container.innerHTML += `
             <div class="despensa-row-item">
@@ -187,7 +198,7 @@ function renderDespensa(filtroTexto = '') {
                     </div>
                     <div class="despensa-item-details">
                         <h4>${nome}</h4>
-                        <p>${produto.unidade}<br>Última atualização: ${dataExibicao}<br>${bolinha} ${produto.duracaoCalculada}</p>
+                        <p>${produto.unidade}<br>Última atualização: ${dataExibicao}${validadeExibicao}<br>${bolinha} ${produto.duracaoCalculada}</p>
                     </div>
                 </div>
                 <span class="seta-indicador" style="cursor:pointer; padding:5px 10px;" onclick="abrirModalAcao(${produto.id})">➤</span>
@@ -240,21 +251,12 @@ function enviarDaDespensaParaLista() {
 }
 
 function enviarDaDespensaParaComprados() {
-    if (!produtoSelecionadoId) return;
-    let indice = produtos.findIndex(p => p.id === produtoSelecionadoId);
-    if (indice !== -1) {
-        let produto = produtos[indice];
-        listaCompras.push({
-            id: Date.now(),
-            nome: produto.nome,
-            categoria: produto.categoria || 'Alimentos',
-            comprado: true
-        });
-        produtos.splice(indice, 1);
-        salvarDados();
-        fecharModalAcao();
-        renderDespensa();
-    }
+    if (produtoSelecionadoId === null) return;
+    let produto = produtos.find(p => p.id === produtoSelecionadoId);
+    if (!produto) return;
+    let id = produto.id;
+    fecharModalAcao();
+    abrirModalComprado(id, 'despensa');
 }
 
 function alternarCategoria(slugCategoria) {
@@ -317,154 +319,278 @@ function adicionarNaLista() {
 }
 
 function alternarComprado(id) {
-    let item = listaCompras.find(i => i.id === id);
-    if (item) {
-        item.comprado = true;
-        salvarDados();
-        renderListaCompras();
+    if (listaCompras.some(item => item.id === id && !item.comprado)) {
+        abrirModalComprado(id, 'lista');
     }
+}
+
+function dataHojeISO() {
+    let hoje = new Date();
+    let ano = hoje.getFullYear();
+    let mes = String(hoje.getMonth() + 1).padStart(2, '0');
+    let dia = String(hoje.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+}
+
+function formatarDataISO(data) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data || '')) return '';
+    let [ano, mes, dia] = data.split('-');
+    return `${dia}/${mes}/${ano}`;
+}
+
+function escaparHtml(texto) {
+    return String(texto).replace(/[&<>"']/g, caractere => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[caractere]);
+}
+
+function criarOpcoes(opcoes, selecionado) {
+    return opcoes.map(opcao => `<option value="${escaparHtml(opcao)}" ${opcao === String(selecionado || '') ? 'selected' : ''}>${escaparHtml(opcao)}</option>`).join('');
+}
+
+const opcoesUnidadeComprados = ['1kg', '500g', '250g', '2kg', '5kg', '1 unidade', '1 pacote', '1 caixa', '1L', '500ml', '200ml', '100g', '100ml'];
+const opcoesDuracaoComprados = ['1 dia', '2 dias', '3 dias', '4 dias', '5 dias', '6 dias', '1 semana', '2 semanas', '3 semanas', '1 mês', '2 meses', '3 meses', '4 meses', '5 meses', '6 meses', '7 meses', '8 meses', '9 meses', '10 meses', '11 meses', '1 ano'];
+
+function dataISOEmDias(data) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data || '')) return null;
+    let [ano, mes, dia] = data.split('-').map(Number);
+    let valor = Date.UTC(ano, mes - 1, dia) / 86400000;
+    let verificacao = new Date(valor * 86400000);
+    if (verificacao.getUTCFullYear() !== ano || verificacao.getUTCMonth() + 1 !== mes || verificacao.getUTCDate() !== dia) return null;
+    return valor;
+}
+
+function duracaoCompradoEmDias(duracao) {
+    let resultado = /^(\d+)\s+(dia|dias|semana|semanas|mês|meses|ano|anos)$/.exec(duracao || '');
+    if (!resultado) return null;
+    let numero = Number(resultado[1]);
+    let unidade = resultado[2];
+    if (unidade.startsWith('dia')) return numero;
+    if (unidade.startsWith('semana')) return numero * 7;
+    if (unidade === 'mês' || unidade === 'meses') return numero * 30;
+    return numero * 365;
+}
+
+function calcularAlertaComprado(item) {
+    let hoje = dataISOEmDias(dataHojeISO());
+    let prazoValidade = dataISOEmDias(item.validade);
+    let dataCompra = dataISOEmDias(item.dataCompra);
+    let duracao = duracaoCompradoEmDias(item.duracao);
+    let avisos = [];
+
+    if (prazoValidade !== null) avisos.push({ tipo: 'validade', dias: prazoValidade - hoje });
+    if (dataCompra !== null && duracao !== null) avisos.push({ tipo: 'duracao', dias: dataCompra + duracao - hoje });
+    if (!avisos.length) return null;
+    avisos.sort((a, b) => a.dias - b.dias);
+    let maisProximo = avisos[0];
+    if (maisProximo.dias > 7) return null;
+
+    if (maisProximo.tipo === 'validade') {
+        if (maisProximo.dias < 0) return 'Validade vencida';
+        if (maisProximo.dias === 0) return 'Vence hoje';
+        if (maisProximo.dias === 1) return 'Validade amanhã';
+        return `Validade em ${maisProximo.dias} dias`;
+    }
+    if (maisProximo.dias <= 0) return 'Previsão de consumo atingida';
+    if (maisProximo.dias === 1) return 'Pode acabar amanhã';
+    return `Pode acabar em ${maisProximo.dias} dias`;
+}
+
+function atualizarAlertasComprados() {
+    let alertas = listaCompras.filter(item => item.comprado && calcularAlertaComprado(item)).length;
+    ['alerta-comprados-inicio', 'alerta-comprados-aba'].forEach(id => {
+        let indicador = document.getElementById(id);
+        if (!indicador) return;
+        indicador.hidden = alertas === 0;
+        indicador.textContent = alertas > 9 ? '9+' : String(alertas);
+        indicador.setAttribute('aria-label', `${alertas} ${alertas === 1 ? 'produto precisa' : 'produtos precisam'} de atenção`);
+    });
+}
+
+function normalizarBuscaComprados(texto) {
+    return String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR').trim();
+}
+
+function filtrarComprados() {
+    renderComprados();
 }
 
 function renderComprados() {
     let container = document.getElementById('lista-comprados-container');
+    let contador = document.getElementById('comprados-contador');
+    let comprados = listaCompras.filter(item => item.comprado);
+    let busca = normalizarBuscaComprados(document.getElementById('busca-comprados').value);
+    let encontrados = busca ? comprados.filter(item => normalizarBuscaComprados(item.nome).includes(busca)) : comprados;
+    contador.textContent = busca
+        ? `${encontrados.length} ${encontrados.length === 1 ? 'resultado encontrado' : 'resultados encontrados'}`
+        : `${comprados.length} ${comprados.length === 1 ? 'item comprado' : 'itens comprados'}`;
     container.innerHTML = '';
-    let comprados = listaCompras.filter(i => i.comprado);
+
     if (comprados.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:#555; font-size:0.85rem; padding:15px;">Nenhum item recente marcado como comprado.</p>';
+        container.innerHTML = '<div class="comprados-vazio"><img src="imagens/comprados.png" alt=""><p>Nenhum produto comprado por enquanto.</p><span>Marque os itens na Lista de Compras para encontrá-los aqui.</span></div>';
+        atualizarAlertasComprados();
         return;
     }
 
-    comprados.forEach(i => {
-        let nomeSlug = i.nome.toLowerCase().replace(/\s+/g, '-');
-        let opcoesQuantidade = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
-        let opcoesDuracao = ['1 dia', '2 dias', '3 dias', '4 dias', '5 dias', '6 dias', '1 semana', '2 semanas', '3 semanas', '1 mês', '2 meses', '3 meses', '4 meses', '5 meses', '6 meses', '7 meses', '8 meses', '9 meses', '10 meses', '11 meses', '1 ano'];
-        let htmlOpcoesQtd = opcoesQuantidade.map(q => '<div class="caixa-suspensa-opcao" onclick="selecionarOpcao(' + i.id + ', \'qtd\', \'' + q + '\')">' + q + '</div>').join('');
-        let htmlOpcoesDur = opcoesDuracao.map(d => '<div class="caixa-suspensa-opcao" onclick="selecionarOpcao(' + i.id + ', \'dur\', \'' + d + '\')">' + d + '</div>').join('');
+    if (encontrados.length === 0) {
+        container.innerHTML = '<div class="comprados-vazio"><p>Nenhum produto encontrado.</p><span>Tente buscar por outro nome.</span></div>';
+        atualizarAlertasComprados();
+        return;
+    }
+
+    encontrados.forEach(item => {
+        let nome = escaparHtml(item.nome);
+        let categoria = escaparHtml(item.categoria || 'Alimentos');
+        let nomeSlug = item.nome.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        let alerta = calcularAlertaComprado(item);
+        let quantidadeExibicao = item.quantidade ? escaparHtml(item.quantidade) + (item.unidade ? ` × ${escaparHtml(item.unidade)}` : '') : 'Não informada';
+        let validadeExibicao = item.validade ? formatarDataISO(item.validade) : 'Não informada';
 
         container.innerHTML += `
-            <div class="comprado-item-row">
-                <div style="display:flex; align-items:center; justify-content:space-between;">
-                    <div style="display:flex; align-items:center; gap:12px;">
+            <div class="comprado-item-row ${alerta ? 'comprado-com-alerta' : ''}">
+                ${alerta ? `<div class="alerta-comprado-etiqueta" role="status"><span class="alerta-simbolo">!</span>${escaparHtml(alerta)}</div>` : ''}
+                <div class="comprado-item-topo">
+                    <div class="comprado-item-produto">
                         <div class="despensa-circle-img">
-                            <img src="imagens/${nomeSlug}.png" alt="${i.nome}">
+                            <img src="imagens/${nomeSlug}.png" alt="${nome}" onerror="this.onerror=null;this.src='imagens/cesta.png'">
                         </div>
-                        <h4 style="font-size:1rem; color:#000; font-weight:400;">${i.nome}</h4>
+                        <div class="comprado-item-textos">
+                            <h4>${nome}</h4>
+                            <span>${categoria}</span>
+                        </div>
                     </div>
-                    <button onclick="reverterParaLista(${i.id})" title="Voltar para a Lista de Compras" style="background:#ffffff; border:1px solid #ccc; color:#000; font-size:0.75rem; font-weight:400; width:22px; height:22px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 2px rgba(0,0,0,0.1);">✕</button>
                 </div>
-                <div class="comprado-grid">
-                    <label>Unidade: 
-                        <select id="unidade-${i.id}" onchange="verificarCamposObrigatorios(${i.id})">
-                            <option value="">Selecione</option>
-                            <option value="1kg">1kg</option>
-                            <option value="500g">500g</option>
-                            <option value="1 unidade">1 unidade</option>
-                        </select>
-                    </label>
-                    <label>Quantidade: 
-                        <div class="caixa-suspensa">
-                            <div id="qtd-cabecalho-${i.id}" class="caixa-suspensa-cabecalho" onclick="alternarCaixaSuspensa(${i.id}, 'qtd')">
-                                <span id="qtd-texto-${i.id}">Selecione</span> <span>⌵</span>
-                            </div>
-                            <div id="qtd-lista-${i.id}" class="caixa-suspensa-lista">
-                                ${htmlOpcoesQtd}
-                            </div>
-                        </div>
-                        <input type="hidden" id="qtd-val-${i.id}" value="" onchange="verificarCamposObrigatorios(${i.id})">
-                    </label>
-                    <label>Duração estimada: 
-                        <div class="caixa-suspensa">
-                            <div id="dur-cabecalho-${i.id}" class="caixa-suspensa-cabecalho" onclick="alternarCaixaSuspensa(${i.id}, 'dur')">
-                                <span id="dur-texto-${i.id}">Selecione</span> <span>⌵</span>
-                            </div>
-                            <div id="dur-lista-${i.id}" class="caixa-suspensa-lista">
-                                ${htmlOpcoesDur}
-                            </div>
-                        </div>
-                        <input type="hidden" id="dur-val-${i.id}" value="" onchange="verificarCamposObrigatorios(${i.id})">
-                    </label>
-                    <label>Prazo de validade: <input type="date" id="val-${i.id}"></label>
+                <div class="comprado-item-resumo">
+                    <div class="comprado-resumo-dado">
+                        <span>Quantidade</span>
+                        <strong>${quantidadeExibicao}</strong>
+                    </div>
+                    <div class="comprado-resumo-dado">
+                        <span>Validade</span>
+                        <strong>${validadeExibicao}</strong>
+                    </div>
                 </div>
-                <button id="botao-adicionar-${i.id}" class="botao-adicionar-despensa" onclick="enviarParaDespensa(${i.id})">Adicionar</button>
+                <div class="comprado-item-acoes">
+                    <button type="button" class="botao-editar-comprado" onclick="abrirModalComprado(${item.id}, 'editar')">Editar informações</button>
+                    <button type="button" class="botao-acabou-comprado" onclick="marcarCompradoAcabou(${item.id})">Marcar que acabou</button>
+                </div>
             </div>
         `;
     });
+    atualizarAlertasComprados();
 }
 
-function alternarCaixaSuspensa(id, tipo) {
-    document.querySelectorAll('.caixa-suspensa-lista').forEach(l => {
-        if (l.id !== tipo + '-lista-' + id) l.classList.remove('aberta');
-    });
-    let lista = document.getElementById(tipo + '-lista-' + id);
-    if (lista) lista.classList.toggle('aberta');
+function abrirModalComprado(id, origem) {
+    let item = origem === 'despensa' ? produtos.find(p => p.id === id) : listaCompras.find(i => i.id === id);
+    if (!item) return;
+    modalCompradoAtual = { id, origem };
+    document.getElementById('modal-comprado-titulo').textContent = origem === 'editar' ? 'Editar informações' : 'Produto comprado';
+    document.getElementById('modal-comprado-nome').textContent = item.nome;
+
+    let campoData = document.getElementById('comprado-data-compra');
+    campoData.value = item.dataCompra || (origem === 'lista' ? document.getElementById('input-data-compra').value : '') || dataHojeISO();
+    document.getElementById('comprado-validade').value = item.validade || '';
+    let unidade = document.getElementById('comprado-unidade');
+    let quantidade = document.getElementById('comprado-quantidade');
+    let duracao = document.getElementById('comprado-duracao');
+    unidade.innerHTML = '<option value="">Selecione</option>' + criarOpcoes(opcoesUnidadeComprados, item.unidade);
+    quantidade.innerHTML = '<option value="">Selecione</option>' + criarOpcoes(Array.from({length: 20}, (_, indice) => String(indice + 1)), item.quantidade);
+    duracao.innerHTML = '<option value="">Selecione</option>' + criarOpcoes(opcoesDuracaoComprados, item.duracao);
+
+    let modal = document.getElementById('modal-comprado');
+    modal.style.display = 'flex';
+    modal.setAttribute('aria-hidden', 'false');
+    campoData.focus();
 }
 
-function selecionarOpcao(id, tipo, valor) {
-    document.getElementById(tipo + '-texto-' + id).innerText = valor;
-    let inputOculto = document.getElementById(tipo + '-val-' + id);
-    inputOculto.value = valor;
-    document.getElementById(tipo + '-lista-' + id).classList.remove('aberta');
-    verificarCamposObrigatorios(id);
+function fecharModalComprado() {
+    let modal = document.getElementById('modal-comprado');
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+    modalCompradoAtual = null;
+    renderListaCompras();
 }
 
-function verificarCamposObrigatorios(id) {
-    let unidade = document.getElementById('unidade-' + id).value;
-    let quantidade = document.getElementById('qtd-val-' + id).value;
-    let duracao = document.getElementById('dur-val-' + id).value;
-    let botao = document.getElementById('botao-adicionar-' + id);
-    if (!unidade || !quantidade || !duracao || !botao) return;
-    if (unidade && quantidade && duracao) {
-        botao.classList.add('pronto');
+function clicarForaModalComprado(evento) {
+    if (evento.target === document.getElementById('modal-comprado')) fecharModalComprado();
+}
+
+function salvarFormularioComprado(evento) {
+    evento.preventDefault();
+    if (!modalCompradoAtual) return;
+    let { id, origem } = modalCompradoAtual;
+    let dados = {
+        dataCompra: document.getElementById('comprado-data-compra').value,
+        validade: document.getElementById('comprado-validade').value,
+        unidade: document.getElementById('comprado-unidade').value,
+        quantidade: document.getElementById('comprado-quantidade').value,
+        duracao: document.getElementById('comprado-duracao').value
+    };
+    if (!dados.dataCompra || !dados.unidade || !dados.quantidade || !dados.duracao) return;
+
+    if (origem === 'despensa') {
+        let indice = produtos.findIndex(p => p.id === id);
+        if (indice === -1) return;
+        let produto = produtos.splice(indice, 1)[0];
+        listaCompras.push({ id: proximoIdComprado(), nome: produto.nome, categoria: produto.categoria || 'Alimentos', comprado: true, ...dados });
     } else {
-        botao.classList.remove('pronto');
+        let item = listaCompras.find(i => i.id === id);
+        if (!item) return;
+        Object.assign(item, dados, { comprado: true });
     }
+
+    salvarDados();
+    fecharModalComprado();
+    renderComprados();
+    if (origem === 'despensa') renderDespensa();
 }
 
-window.addEventListener('click', function(evento) {
-    if (!evento.target.closest('.caixa-suspensa')) {
-        document.querySelectorAll('.caixa-suspensa-lista').forEach(l => l.classList.remove('aberta'));
+function proximoIdComprado() {
+    let ids = listaCompras.map(item => Number(item.id)).filter(Number.isFinite);
+    return Math.max(Date.now(), 1, ...ids.map(id => id + 1));
+}
+
+function marcarCompradoAcabou(id) {
+    let item = listaCompras.find(produto => produto.id === id && produto.comprado);
+    if (!item) return;
+    item.comprado = false;
+    delete item.dataCompra;
+    delete item.validade;
+    delete item.unidade;
+    delete item.quantidade;
+    delete item.duracao;
+    salvarDados();
+    renderComprados();
+    renderListaCompras();
+}
+
+window.addEventListener('focus', () => {
+    atualizarAlertasComprados();
+    if (document.getElementById('tela-comprados').classList.contains('ativo')) renderComprados();
+});
+
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        atualizarAlertasComprados();
+        if (document.getElementById('tela-comprados').classList.contains('ativo')) renderComprados();
     }
 });
 
-function reverterParaLista(id) {
-    let item = listaCompras.find(i => i.id === id);
-    if (item) {
-        item.comprado = false;
-        salvarDados();
-        renderComprados();
-    }
-}
+setInterval(() => {
+    atualizarAlertasComprados();
+    if (document.getElementById('tela-comprados').classList.contains('ativo')) renderComprados();
+}, 600000);
 
-function enviarParaDespensa(id) {
-    let item = listaCompras.find(i => i.id === id);
-    let unidadeSelect = document.getElementById('unidade-' + id);
-    let valorQuantidade = document.getElementById('qtd-val-' + id);
-    let valorDuracao = document.getElementById('dur-val-' + id);
-    let unidade = unidadeSelect ? unidadeSelect.value : '';
-    let quantidade = valorQuantidade ? valorQuantidade.value : '';
-    let duracao = valorDuracao ? valorDuracao.value : '';
-    if (!unidade || !quantidade || !duracao) {
-        return;
-    }
+atualizarAlertasComprados();
 
-    let hoje = new Date();
-    let dia = String(hoje.getDate()).padStart(2, '0');
-    let mes = String(hoje.getMonth() + 1).padStart(2, '0');
-    let ano = hoje.getFullYear();
-    let dataAtual = dia + '/' + mes + '/' + ano;
-
-    if (item) {
-        produtos.push({
-            id: Date.now(),
-            nome: item.nome,
-            unidade: quantidade + 'x ' + unidade,
-            categoria: item.categoria || 'Alimentos',
-            status: 'estoque',
-            duracao: duracao,
-            atualizacao: dataAtual
-        });
-        listaCompras = listaCompras.filter(i => i.id !== id);
-        salvarDados();
-        renderComprados();
-    }
+let inputDataCompra = document.getElementById('input-data-compra');
+if (inputDataCompra) {
+    inputDataCompra.value = localStorage.getItem('minhas_compras_data_compra') || dataHojeISO();
+    inputDataCompra.addEventListener('change', () => {
+        localStorage.setItem('minhas_compras_data_compra', inputDataCompra.value);
+    });
 }
