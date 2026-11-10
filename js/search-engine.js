@@ -4,7 +4,7 @@ function createLists(original_lists,rattributes,rpesquisas) {
 let lists = [...original_lists]
 let attributes = rattributes// atributos que contêm os textos a serem buscados em cada array
 let pesquisas = [...rpesquisas]
-for (list in lists) {
+for (let list in lists) {
     //console.log('list',lists[list])
     // código para sortear os textos primeiro por quantidade de palavras e depois alfabeticamente
     lists[list] = sortWords(sortWordsByNumber(lists[list], attributes[list]),attributes[list])
@@ -13,7 +13,7 @@ for (list in lists) {
 
 //startEngine()
 for (let s = 0; s < lists.length; s++) {
-    lists[s] = sortWords(sortWordsByNumber(lists[list], attributes[list]),attributes[list])
+    lists[s] = sortWords(sortWordsByNumber(lists[s], attributes[s]),attributes[s])
     search(lists[s], attributes[s], s, pesquisas[s])
 }
 
@@ -34,7 +34,7 @@ function search(opcoes,titleProperty,searcherIndex,pesquisa) {
     results = []
     pesquisa = pesquisa.toLowerCase()
 
-      for (n in subjects) {
+      for (let n in subjects) {
         let index_found = subjects[n][titleProperty].search(new RegExp(`${pesquisa}`,"gi"))
         if (index_found > -1) {
             subjects[n].index_found = subjects[n][titleProperty].search(new RegExp(`${pesquisa}`,"gi"))
@@ -50,7 +50,7 @@ function search(opcoes,titleProperty,searcherIndex,pesquisa) {
     subjects = sortob(subjects, 'index_found')
     //console.log('SUBJECTS AFTER INDEX',subjects)
 
-    for (n in subjects) { 
+    for (let n in subjects) { 
          //subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquisa,'(?<=^|\\W)')
          if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquisa}`,"gi")) != -1 && pesquisa.length != 0) {
             //console.log('pushar esse (1)', subjects[n][titleProperty])
@@ -58,14 +58,14 @@ function search(opcoes,titleProperty,searcherIndex,pesquisa) {
              subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquisa,'(?<=^)')
          } }
     if (pesquisa.length != 0) {
-        for (n in subjects) {
+        for (let n in subjects) {
              if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquisa}`,"gi")) == -1 && subjects[n][titleProperty].search(new RegExp(`(?<!([a-z]|[ãáàâéêóõôíúç]))${pesquisa}`,"gi")) != -1 && pesquisa.length != 0) {
                  //console.log('pushar esse (2)', subjects[n][titleProperty])
                 results.push(subjects[n])
                 subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquisa,'(?<!([a-z]|[ãáàâéêóõôíúç]))')
              }}}
  if (pesquisa.length != 0){
-    for (n in subjects) {
+    for (let n in subjects) {
          if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquisa}`,"gi")) == -1 && subjects[n][titleProperty].search(new RegExp(`(?<!([a-z]|[ãáàâéêóõôíúç]))${pesquisa}`,"gi")) == -1 && subjects[n][titleProperty].search(new RegExp(`${pesquisa}`,"gi")) != -1 && pesquisa.length != 0) {
             //console.log('FOI ESSE',subjects[n][titleProperty])
              //console.log('pushar esse (3)', subjects[n][titleProperty])
@@ -82,17 +82,17 @@ function sortWords(palavrasPrimitivas,s) {
 palavrasNumericas = []
 posicaoPalavras = []
 
-for (palavra in palavrasPrimitivas) {
+for (let palavra in palavrasPrimitivas) {
     word = palavrasPrimitivas[palavra][s].toLowerCase()
     neword = ''
-    for (car in word) {
+    for (let car in word) {
         if (word[car] != ' ') {
             neword+= word[car]
         }
         }
     word = neword
     wordToNumber = ''
-    for (letra = 0; letra < word.length; letra++) {
+    for (let letra = 0; letra < word.length; letra++) {
         if (letra != word.length - 1) {
             wordToNumber += `${alfabeto.indexOf(word[letra])}.`
         } else {
@@ -102,13 +102,13 @@ for (palavra in palavrasPrimitivas) {
     posicaoPalavras.push(palavra)
 }
 
-for (pNumber in palavrasNumericas) {
+for (let pNumber in palavrasNumericas) {
     stop = false
-    for (n = 0; stop == false && n < pNumber; n++) {
+    for (let n = 0; stop == false && n < pNumber; n++) {
         if (n != pNumber) {
             palavraAnalisar = []
             numint = ''
-            for (num = 0; num < palavrasNumericas[n].length; num++) {
+            for (let num = 0; num < palavrasNumericas[n].length; num++) {
                    if (palavrasNumericas[n][num] == '.') {
                     palavraAnalisar.push(numint)
                     numint = ''
@@ -120,7 +120,7 @@ for (pNumber in palavrasNumericas) {
                    }}
             palavraOrigin = []
             numint = ''
-            for (num = 0; num < palavrasNumericas[pNumber].length; num++) {
+            for (let num = 0; num < palavrasNumericas[pNumber].length; num++) {
                    if (palavrasNumericas[pNumber][num] == '.') {
                     palavraOrigin.push(numint)
                     numint = ''
@@ -132,7 +132,7 @@ for (pNumber in palavrasNumericas) {
                    }}
            if (palavraOrigin.length > palavraAnalisar.length) {
              pare = false
-             for (numb = 0; numb < palavraAnalisar.length && pare == false; numb++) {
+             for (let numb = 0; numb < palavraAnalisar.length && pare == false; numb++) {
               if (Number(palavraAnalisar[numb]) < Number(palavraOrigin[numb])) {
                 pare = true
               }else if (Number(palavraAnalisar[numb]) > Number(palavraOrigin[numb])) {
@@ -140,7 +140,7 @@ for (pNumber in palavrasNumericas) {
                 stop = true
                 palavraSubir = palavrasNumericas[pNumber]
                 wordposition = posicaoPalavras[pNumber]
-                for (posicao = pNumber; posicao > n; posicao--) {
+                for (let posicao = pNumber; posicao > n; posicao--) {
                   palavrasNumericas[posicao] = palavrasNumericas[posicao - 1]
                   posicaoPalavras[posicao] = posicaoPalavras[posicao - 1]
                 }
@@ -151,7 +151,7 @@ for (pNumber in palavrasNumericas) {
               }}
            }else{
             pare = false
-            for (numb = 0; numb < palavraOrigin.length && pare == false; numb++) {
+            for (let numb = 0; numb < palavraOrigin.length && pare == false; numb++) {
                 if (Number(palavraAnalisar[numb]) < Number(palavraOrigin[numb])) {
                     pare = true
                   }else if (Number(palavraAnalisar[numb]) > Number(palavraOrigin[numb])) {
@@ -159,7 +159,7 @@ for (pNumber in palavrasNumericas) {
                     stop = true
                     palavraSubir = palavrasNumericas[pNumber]
                     wordposition = posicaoPalavras[pNumber]
-                    for (posicao = pNumber; posicao > n; posicao--) {
+                    for (let posicao = pNumber; posicao > n; posicao--) {
                       palavrasNumericas[posicao] = palavrasNumericas[posicao - 1]
                       posicaoPalavras[posicao] = posicaoPalavras[posicao - 1]
                     }
@@ -170,7 +170,7 @@ for (pNumber in palavrasNumericas) {
                   }}}}}}
 
 newlista = []
-for (p in palavrasNumericas) {
+for (let p in palavrasNumericas) {
 newlista.push(palavrasPrimitivas[posicaoPalavras[p]])
 }
 
@@ -179,34 +179,33 @@ return newlista
 
 // Ordena os objetos numericamente por propriedade
 // os textos pelo índice de busca
-function sortob(n, pam, pim) {
+function sortob(n, index1, index2) {
     let maiorparamenor = []
     let posiçõesnumeros = []
-    let yposition = n
+    let listaobs = n
 
-    for (n in yposition) {
+    for (let n in listaobs) {
         maiorparamenor[n] = {}
-        yposition[n].original_index = Number(n)
+        listaobs[n].original_index = Number(n)
         posiçõesnumeros.push(-1)
-        maiorparamenor[n][pam] = Infinity
+        maiorparamenor[n][index1] = Infinity
     }
 
-    for (item in yposition) {
-        let volume = 0
+    for (let item in listaobs) {
         let dn = 0
-        for (volume in yposition) {
+        for (let itemd in listaobs) {
             if (dn == 0) {
-                if (yposition[item][pam] < maiorparamenor[volume][pam] || yposition[item][pam] == maiorparamenor[volume][pam] && yposition[item][pim] < maiorparamenor[volume][pim]) {
-                    let itens = yposition.length - (Number(volume) + 1)
-                    let leng = yposition.length
+                if (listaobs[item][index1] < maiorparamenor[itemd][index1] || listaobs[item][index1] == maiorparamenor[itemd][index1] && listaobs[item][index2] < maiorparamenor[itemd][index2]) {
+                    let itens = listaobs.length - (Number(itemd) + 1)
+                    let leng = listaobs.length
 
-                    for (c = 0; c < itens; c++) {
+                    for (let c = 0; c < itens; c++) {
                         maiorparamenor[Number(leng) - 1] = maiorparamenor[Number(leng) - 2]
                         posiçõesnumeros[Number(leng) - 1] = posiçõesnumeros[Number(leng) - 2]
                         leng--
                     }
-                    maiorparamenor[volume] = yposition[item]
-                    posiçõesnumeros[volume] = Number(item)
+                    maiorparamenor[itemd] = listaobs[item]
+                    posiçõesnumeros[itemd] = Number(item)
                     dn = 10
                 }
             }
@@ -217,7 +216,7 @@ function sortob(n, pam, pim) {
 
 // Ordena os textos por quantidade de palavras
 function sortWordsByNumber(palavrasPrimitivas,s) {
-for (palavra in palavrasPrimitivas) {
+for (let palavra in palavrasPrimitivas) {
     let word = palavrasPrimitivas[palavra][s]
     let break_word = ''
     let words_number = 0
