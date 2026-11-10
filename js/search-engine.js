@@ -1,29 +1,25 @@
 
-//createLists([subjects2,subjects],['title','title'])
 function createLists(original_lists,rattributes,rpesquisas) {
 let lists = [...original_lists]
 let attributes = rattributes// atributos que contêm os textos a serem buscados em cada array
 let pesquisas = [...rpesquisas]
 for (let list in lists) {
-    //console.log('list',lists[list])
     // código para sortear os textos primeiro por quantidade de palavras e depois alfabeticamente
     lists[list] = sortWords(sortWordsByNumber(lists[list], attributes[list]),attributes[list])
-    console.log('list2',lists[list])
 }
 
 let results = []
 for (let s = 0; s < lists.length; s++) {
     lists[s] = sortWords(sortWordsByNumber(lists[s], attributes[s]),attributes[s])
-     results.push(search(lists[s], attributes[s], s, pesquisas[s]))
+     results.push(search(lists[s], attributes[s], pesquisas[s]))
 }
 
-console.log('result',results)
 return results[0]
 
 }
 
-function search(opcoes,titleProperty,searcherIndex,pesquisa) {   
-    //console.log('LOGGG',opcoes)
+function search(opcoes,titleProperty,pesquisa) {
+
     let subjects = [...opcoes]
     let results = []
     pesquisa = pesquisa.toLowerCase()
@@ -42,27 +38,21 @@ function search(opcoes,titleProperty,searcherIndex,pesquisa) {
     // índice em 'abacate' = 0
     // índice em 'tangerina' = 1
     subjects = sortob(subjects, 'index_found')
-    //console.log('SUBJECTS AFTER INDEX',subjects)
 
     for (let n in subjects) { 
-         //subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquisa,'(?<=^|\\W)')
          if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquisa}`,"gi")) != -1 && pesquisa.length != 0) {
-            //console.log('pushar esse (1)', subjects[n][titleProperty])
              results.push(subjects[n])
              subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquisa,'(?<=^)')
          } }
     if (pesquisa.length != 0) {
         for (let n in subjects) {
              if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquisa}`,"gi")) == -1 && subjects[n][titleProperty].search(new RegExp(`(?<!([a-z]|[ãáàâéêóõôíúç]))${pesquisa}`,"gi")) != -1 && pesquisa.length != 0) {
-                 //console.log('pushar esse (2)', subjects[n][titleProperty])
                 results.push(subjects[n])
                 subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquisa,'(?<!([a-z]|[ãáàâéêóõôíúç]))')
              }}}
  if (pesquisa.length != 0){
     for (let n in subjects) {
          if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquisa}`,"gi")) == -1 && subjects[n][titleProperty].search(new RegExp(`(?<!([a-z]|[ãáàâéêóõôíúç]))${pesquisa}`,"gi")) == -1 && subjects[n][titleProperty].search(new RegExp(`${pesquisa}`,"gi")) != -1 && pesquisa.length != 0) {
-            //console.log('FOI ESSE',subjects[n][titleProperty])
-             //console.log('pushar esse (3)', subjects[n][titleProperty])
             results.push(subjects[n])
             subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquisa,'')
          }}}
