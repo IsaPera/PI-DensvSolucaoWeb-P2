@@ -257,7 +257,7 @@ for (char = 0; char < text.length; char++) {
     if (indexes.indexOf(Number(char)) == -1) {
         innertext += text[char]
     }else{
-        innertext += `<span style="font-weight: 600;color:blue;">${text.slice(Number(char),Number(char) + Number(busca.length))}</span>`
+        innertext += `<span style="font-weight: 600;">${text.slice(Number(char),Number(char) + Number(busca.length))}</span>`
         char += busca.length - 1
     }
 }
