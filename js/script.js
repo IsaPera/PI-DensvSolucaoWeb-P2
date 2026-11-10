@@ -139,7 +139,6 @@ function renderDespensa(filtroTexto = '') {
 
     createLists([produtos],['nome'],[filtroTexto])
 
-    console.log(filtroAtualStatus)
     if (filtroTexto != '') {
     window.filtrados = results.filter(produto => {
         let combinaTexto = true

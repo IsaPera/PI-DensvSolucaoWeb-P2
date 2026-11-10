@@ -1,16 +1,12 @@
 
 //createLists([subjects2,subjects],['title','title'])
 function createLists(lists,attributes,pesquisas) {
-    window.lists = [...lists]
-pselected = [] // reseta as opções selecionadas por teclado para -1
+window.lists = [...lists]
 podeir = [] // outro reset de navegação
 window.attributes = attributes// atributos que contêm os textos a serem buscados em cada array
 window.pesquisas = [...pesquisas]
-color_selected = 'var(--sideyellow)' // cor atribuída aos parágrafos em seleção
-pstate = [] // estado das opções ( (des)selecionada, (não) em hover )
 for (list in lists) {
     console.log('list',lists[list])
-    pselected.push(-1)
     // código para sortear os textos primeiro por quantidade de palavras e depois alfabeticamente
     lists[list] = sortWords(sortWordsByNumber(lists[list], attributes[list]),attributes[list])
     podeir.push(true)
@@ -24,10 +20,8 @@ startEngine()
 function startEngine() {
     console.log('lists[0]',lists[0])
 for (let s = 0; s < lists.length; s++) {
-    pstate.push([])
     lists[s] = sortWords(sortWordsByNumber(lists[list], attributes[list]),attributes[list])
     search(lists[s], attributes[s], s, pesquisas[s])
-        
 }
 }
 
@@ -36,11 +30,8 @@ function search(opcoes,titleProperty,searcherIndex,pesquisa) {
     console.log('LOGGG',opcoes)
     subjects = [...opcoes]
     window.results = []
-    pstate[searcherIndex] = []
-    pselected[searcherIndex] = -1
 
       for (n in subjects) {
-        //console.log('www',subjects[n][titleProperty].search(new RegExp(`${pesquisa}`,"gi")))
         index_found = subjects[n][titleProperty].search(new RegExp(`${pesquisa}`,"gi"))
         if (index_found > -1) {
             subjects[n].index_found = subjects[n][titleProperty].search(new RegExp(`${pesquisa}`,"gi"))
@@ -60,7 +51,7 @@ function search(opcoes,titleProperty,searcherIndex,pesquisa) {
          pesquise = pesquisa.toLowerCase()
          //subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquise,'(?<=^|\\W)')
          if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquise}`,"gi")) != -1 && pesquise.length != 0) {
-            console.log('pushar esse (1)', subjects[n][titleProperty])
+            //console.log('pushar esse (1)', subjects[n][titleProperty])
              results.push(subjects[n])
              subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquise,'(?<=^)')
          } }
@@ -68,7 +59,7 @@ function search(opcoes,titleProperty,searcherIndex,pesquisa) {
         for (n in subjects) {
              pesquise = pesquisa.toLowerCase()
              if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquise}`,"gi")) == -1 && subjects[n][titleProperty].search(new RegExp(`(?<!([a-z]|[ãáàâéêóõôíúç]))${pesquise}`,"gi")) != -1 && pesquise.length != 0) {
-                 console.log('pushar esse (2)', subjects[n][titleProperty])
+                 //console.log('pushar esse (2)', subjects[n][titleProperty])
                 results.push(subjects[n])
                 subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquise,'(?<!([a-z]|[ãáàâéêóõôíúç]))')
              }}}
@@ -76,13 +67,13 @@ function search(opcoes,titleProperty,searcherIndex,pesquisa) {
     for (n in subjects) {
          pesquise = pesquisa.toLowerCase()
          if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquise}`,"gi")) == -1 && subjects[n][titleProperty].search(new RegExp(`(?<!([a-z]|[ãáàâéêóõôíúç]))${pesquise}`,"gi")) == -1 && subjects[n][titleProperty].search(new RegExp(`${pesquise}`,"gi")) != -1 && pesquise.length != 0) {
-            console.log('FOI ESSE',subjects[n][titleProperty])
-             console.log('pushar esse (3)', subjects[n][titleProperty])
+            //console.log('FOI ESSE',subjects[n][titleProperty])
+             //console.log('pushar esse (3)', subjects[n][titleProperty])
             results.push(subjects[n])
             subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquise,'')
          }}}
 
-         console.log('results',results)
+         //console.log('results',results)
  }
 
 
@@ -94,7 +85,6 @@ posicaoPalavras = []
 
 for (palavra in palavrasPrimitivas) {
     word = palavrasPrimitivas[palavra][s].toLowerCase()
-    //console.log('word',word)
     neword = ''
     for (car in word) {
         if (word[car] != ' ') {
@@ -199,7 +189,7 @@ function sortob(n, pam, pim) {
         maiorparamenor[n] = {}
         yposition[n].original_index = Number(n)
         posiçõesnumeros.push(-1)
-        maiorparamenor[n][pam] = 100000000000000000000000000000000000000000000000000000000000000000000000000000000
+        maiorparamenor[n][pam] = Infinity
     }
 
     for (item in yposition) {
@@ -229,23 +219,19 @@ function sortob(n, pam, pim) {
 // Ordena os textos por quantidade de palavras
 function sortWordsByNumber(palavrasPrimitivas,s) {
 for (palavra in palavrasPrimitivas) {
-    word = palavrasPrimitivas[palavra][s] //.toLowerCase()
-    //console.log('word',word)
+    word = palavrasPrimitivas[palavra][s]
     break_word = ''
     words_number = 0
     word_right_spaced = ''
     word += ' '
     for (car in word) {
-        //console.log('caractere',word[car])
         if (word[car] != ' ') {
              if (break_word == '') {
-                //console.warn(break_word,'new word')
                 words_number += 1
             }
             break_word += word[car]
         }else{
             if (break_word != '') {
-            //console.warn(break_word)
             if (word_right_spaced != '')
                 word_right_spaced += ' '
             word_right_spaced += break_word
@@ -253,7 +239,6 @@ for (palavra in palavrasPrimitivas) {
             break_word = ''
         }
         }
-        //console.warn('words number:',words_number,word_right_spaced,word_right_spaced.length)
         palavrasPrimitivas[palavra].words_number = words_number
         palavrasPrimitivas[palavra][s] = word_right_spaced
 }
@@ -287,12 +272,9 @@ for (char = 0; char < text.length; char++) {
     if (indexes.indexOf(Number(char)) == -1) {
         innertext += text[char]
     }else{
-        innertext += `<span style="font-weight: 600;">${text.slice(Number(char),Number(char) + Number(busca.length))}</span>`
+        innertext += `<span style="font-weight: 600;color:blue;">${text.slice(Number(char),Number(char) + Number(busca.length))}</span>`
         char += busca.length - 1
     }
 }
 return innertext
 }
-
-// (?<=\\W)
-// (?<=^|\\W)
