@@ -137,23 +137,21 @@ function renderDespensa(filtroTexto = '') {
         produto.duracaoCalculada = calculo.texto;
     });
 
-    let results = createLists([produtos],['nome'],[filtroTexto])
+    let results = createLists([produtos],['nome'],[filtroTexto]);
 
+    let filtrados;
     if (filtroTexto != '') {
-    window.filtrados = results.filter(produto => {
+    filtrados = results.filter(produto => {
         let combinaTexto = true
         let combinaStatus = filtroAtualStatus === 'todos' || produto.status === filtroAtualStatus;
         return combinaTexto && combinaStatus;
     });
     }else{
-    
-    window.filtrados = produtos.filter(produto => {
+    filtrados = produtos.filter(produto => {
         let combinaTexto = produto.nome.toLowerCase().includes(filtroTexto.toLowerCase())
         let combinaStatus = filtroAtualStatus === 'todos' || produto.status === filtroAtualStatus;
         return combinaTexto && combinaStatus;
     });
-
-    console.log('1aaaaaaaaaa',filtrados)
     }
 
     if (filtroAtualStatus === 'todos') {
@@ -167,7 +165,6 @@ function renderDespensa(filtroTexto = '') {
     }
 
     filtrados.forEach(produto => {
-        console.log('produto: ',produto, produto.innertext == undefined)
         let nome
         if (produto.innertext == undefined || filtroTexto == '') {
             nome = produto.nome
