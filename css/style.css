@@ -623,3 +623,76 @@ body {
     font-size: 1.3rem;
     cursor: pointer;
 }
+
+.botao-remover-item-lista {
+    background: transparent;
+    border: none;
+    color: #999;
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: color 0.2s;
+}
+
+.botao-remover-item-lista:hover {
+    color: #cc0000;
+}
+
+.item-checado-texto {
+    text-decoration: line-through;
+    color: #666;
+}
+
+.container-acao-finalizar {
+    padding: 10px 14px 14px 14px;
+    background: #ffffff;
+    border-top: 1px solid #e5ebe6;
+    margin-top: auto;
+}
+
+.botao-finalizar-compra {
+    width: 100%;
+    background-color: #2e7d32;
+    color: #ffffff;
+    border: none;
+    padding: 12px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(46, 125, 50, 0.25);
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.botao-finalizar-compra:hover {
+    background-color: #256628;
+}
+
+.botao-finalizar-compra:active {
+    transform: scale(0.98);
+}
+
+/* Responsividade: Celulares Reais (Mobile Viewport) */
+@media (max-width: 480px) {
+    body {
+        background-color: #ffffff;
+        align-items: flex-start;
+        padding: 0;
+    }
+
+    .iphone-frame {
+        max-width: 100vw;
+        height: 100vh;
+        max-height: 100vh;
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+    }
+
+    /* Em aparelhos reais, esconde a barra de status e navegador simulados para aproveitar 100% da tela */
+    .iphone-status-bar,
+    .barra-navegador {
+        display: none;
+    }
+}
