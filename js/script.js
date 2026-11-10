@@ -137,7 +137,7 @@ function renderDespensa(filtroTexto = '') {
         produto.duracaoCalculada = calculo.texto;
     });
 
-    createLists([produtos],['nome'],[filtroTexto])
+    let results = createLists([produtos],['nome'],[filtroTexto])
 
     if (filtroTexto != '') {
     window.filtrados = results.filter(produto => {

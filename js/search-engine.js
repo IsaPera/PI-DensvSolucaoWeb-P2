@@ -11,27 +11,21 @@ for (let list in lists) {
     console.log('list2',lists[list])
 }
 
-//startEngine()
+let results = []
 for (let s = 0; s < lists.length; s++) {
     lists[s] = sortWords(sortWordsByNumber(lists[s], attributes[s]),attributes[s])
-    search(lists[s], attributes[s], s, pesquisas[s])
+     results.push(search(lists[s], attributes[s], s, pesquisas[s]))
 }
 
-}
+console.log('result',results)
+return results[0]
 
-function startEngine() {
-    console.log('lists[0]',lists[0])
-for (let s = 0; s < lists.length; s++) {
-    lists[s] = sortWords(sortWordsByNumber(lists[list], attributes[list]),attributes[list])
-    search(lists[s], attributes[s], s, pesquisas[s])
 }
-}
-
 
 function search(opcoes,titleProperty,searcherIndex,pesquisa) {   
     //console.log('LOGGG',opcoes)
     let subjects = [...opcoes]
-    results = []
+    let results = []
     pesquisa = pesquisa.toLowerCase()
 
       for (let n in subjects) {
@@ -73,6 +67,7 @@ function search(opcoes,titleProperty,searcherIndex,pesquisa) {
             subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquisa,'')
          }}}
 
+         return results
  }
 
 
@@ -245,6 +240,7 @@ palavrasPrimitivas = sortob(palavrasPrimitivas,'words_number')
 return palavrasPrimitivas
 }
 
+// Formata as buscas
 function searchInnertext(text,busca,search_regex) {
 
 let text_changed = text.replace(new RegExp(`${search_regex}${busca}`,"gi"), `/${busca}`)
