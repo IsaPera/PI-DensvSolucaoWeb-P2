@@ -60,15 +60,6 @@ function mudarTela(idAba) {
     if (idAba === 'despensa' && typeof renderDespensa === 'function') renderDespensa();
     if (idAba === 'lista' && typeof renderListaCompras === 'function') renderListaCompras();
     if (idAba === 'comprados' && typeof renderComprados === 'function') renderComprados();
+    if (typeof atualizarAlertasComprados === 'function') atualizarAlertasComprados();
 }
-
-// Configura eventos de clique iniciais quando o DOM carregar
-document.addEventListener('DOMContentLoaded', () => {
-    // Inicializa a data atual no input de compra caso esteja vazio
-    const inputDataCompra = document.getElementById('input-data-compra');
-    if (inputDataCompra && !inputDataCompra.value) {
-        const hoje = new Date().toISOString().split('T')[0];
-        inputDataCompra.value = hoje;
-    }
-});
 

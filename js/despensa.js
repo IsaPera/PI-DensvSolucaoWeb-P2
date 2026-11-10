@@ -214,21 +214,8 @@ function enviarDaDespensaParaLista() {
  * Ação do modal: move o item para a tela de Comprados
  */
 function enviarDaDespensaParaComprados() {
-    if (!produtoSelecionadoId) return;
-    const produtos = obterProdutos();
-    const produto = produtos.find(p => p.id === produtoSelecionadoId);
-    if (produto) {
-        salvarItemLista({
-            id: Date.now(),
-            nome: produto.nome,
-            categoria: produto.categoria || 'Alimentos',
-            selecionado: false,
-            comprado: true,
-            dataCompra: new Date().toISOString().split('T')[0]
-        });
-        removerProduto(produtoSelecionadoId);
-        fecharModalAcao();
-        renderDespensa();
-    }
+    if (produtoSelecionadoId === null) return;
+    const id = produtoSelecionadoId;
+    fecharModalAcao();
+    abrirModalComprado(id, 'despensa');
 }
-

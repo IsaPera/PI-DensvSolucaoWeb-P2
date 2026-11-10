@@ -1,205 +1,299 @@
+let modalCompradoAtual = null;
+let filaFinalizacaoCompras = [];
 
-function renderComprados() {
-    const container = document.getElementById('lista-comprados-container');
-    if (!container) return;
-    container.innerHTML = '';
+const opcoesUnidadeComprados = ['1kg', '500g', '250g', '2kg', '5kg', '1 unidade', '1 pacote', '1 caixa', '1L', '500ml', '200ml', '100g', '100ml'];
+const opcoesDuracaoComprados = ['1 dia', '2 dias', '3 dias', '4 dias', '5 dias', '6 dias', '1 semana', '2 semanas', '3 semanas', '1 mês', '2 meses', '3 meses', '4 meses', '5 meses', '6 meses', '7 meses', '8 meses', '9 meses', '10 meses', '11 meses', '1 ano'];
 
-    const lista = obterListaCompras();
-    const comprados = lista.filter(i => i.comprado);
+function dataHojeISO() {
+    const hoje = new Date();
+    return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+}
 
-    if (comprados.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:#555; font-size:0.85rem; padding:25px;">Nenhum item recente marcado como comprado.</p>';
-        return;
+function formatarDataISO(data) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data || '')) return '';
+    const [ano, mes, dia] = data.split('-');
+    return `${dia}/${mes}/${ano}`;
+}
+
+function escaparHtml(texto) {
+    return String(texto ?? '').replace(/[&<>"']/g, caractere => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[caractere]);
+}
+
+function criarOpcoes(opcoes, selecionado) {
+    return opcoes.map(opcao => `<option value="${escaparHtml(opcao)}" ${opcao === String(selecionado || '') ? 'selected' : ''}>${escaparHtml(opcao)}</option>`).join('');
+}
+
+function dataISOEmDias(data) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data || '')) return null;
+    const [ano, mes, dia] = data.split('-').map(Number);
+    const valor = Date.UTC(ano, mes - 1, dia) / 86400000;
+    const verificacao = new Date(valor * 86400000);
+    if (verificacao.getUTCFullYear() !== ano || verificacao.getUTCMonth() + 1 !== mes || verificacao.getUTCDate() !== dia) return null;
+    return valor;
+}
+
+function duracaoCompradoEmDias(duracao) {
+    const resultado = /^(\d+)\s+(dia|dias|semana|semanas|mês|meses|ano|anos)$/.exec(duracao || '');
+    if (!resultado) return null;
+    const numero = Number(resultado[1]);
+    const unidade = resultado[2];
+    if (unidade.startsWith('dia')) return numero;
+    if (unidade.startsWith('semana')) return numero * 7;
+    if (unidade === 'mês' || unidade === 'meses') return numero * 30;
+    return numero * 365;
+}
+
+function calcularAlertaComprado(item) {
+    const hoje = dataISOEmDias(dataHojeISO());
+    const prazoValidade = dataISOEmDias(item.validade);
+    const dataCompra = dataISOEmDias(item.dataCompra);
+    const duracao = duracaoCompradoEmDias(item.duracao);
+    const avisos = [];
+
+    if (prazoValidade !== null) avisos.push({ tipo: 'validade', dias: prazoValidade - hoje });
+    if (dataCompra !== null && duracao !== null) avisos.push({ tipo: 'duracao', dias: dataCompra + duracao - hoje });
+    if (!avisos.length) return null;
+    avisos.sort((a, b) => a.dias - b.dias);
+    const maisProximo = avisos[0];
+    if (maisProximo.dias > 7) return null;
+
+    if (maisProximo.tipo === 'validade') {
+        if (maisProximo.dias < 0) return 'Validade vencida';
+        if (maisProximo.dias === 0) return 'Vence hoje';
+        if (maisProximo.dias === 1) return 'Validade amanhã';
+        return `Validade em ${maisProximo.dias} dias`;
     }
+    if (maisProximo.dias <= 0) return 'Previsão de consumo atingida';
+    if (maisProximo.dias === 1) return 'Pode acabar amanhã';
+    return `Pode acabar em ${maisProximo.dias} dias`;
+}
 
-    comprados.forEach(i => {
-        const nomeSlug = i.nome.toLowerCase().replace(/\s+/g, '-');
-        const opcoesQuantidade = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
-        const opcoesDuracao = [
-            '1 dia', '2 dias', '3 dias', '4 dias', '5 dias', '6 dias',
-            '1 semana', '2 semanas', '3 semanas',
-            '1 mês', '2 meses', '3 meses', '4 meses', '5 meses', '6 meses', '1 ano'
-        ];
-
-        const htmlOpcoesQtd = opcoesQuantidade.map(q => 
-            `<div class="caixa-suspensa-opcao" onclick="selecionarOpcao(${i.id}, 'qtd', '${q}')">${q}</div>`
-        ).join('');
-
-        const htmlOpcoesDur = opcoesDuracao.map(d => 
-            `<div class="caixa-suspensa-opcao" onclick="selecionarOpcao(${i.id}, 'dur', '${d}')">${d}</div>`
-        ).join('');
-
-        // Se o item já possuir data de compra herdada da finalização, usa-a; senão, data de hoje
-        const dataCompraValor = i.dataCompra || new Date().toISOString().split('T')[0];
-
-        container.innerHTML += `
-            <div class="comprado-item-row">
-                <div style="display:flex; align-items:center; justify-content:space-between;">
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <div class="despensa-circle-img">
-                            <img src="imagens/${nomeSlug}.png" onerror="this.src='imagens/cesta.png'" alt="${i.nome}">
-                        </div>
-                        <h4 style="font-size:1rem; color:#000; font-weight:400;">${i.nome}</h4>
-                    </div>
-                    <button onclick="reverterParaLista(${i.id})" title="Voltar para a Lista de Compras" style="background:#ffffff; border:1px solid #ccc; color:#000; font-size:0.75rem; font-weight:400; width:22px; height:22px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 2px rgba(0,0,0,0.1);">✕</button>
-                </div>
-
-                <div class="comprado-grid">
-                    <label>Unidade: 
-                        <select id="unidade-${i.id}" onchange="verificarCamposObrigatorios(${i.id})">
-                            <option value="">Selecione</option>
-                            <option value="1kg">1kg</option>
-                            <option value="500g">500g</option>
-                            <option value="1 unidade">1 unidade</option>
-                            <option value="1 pacote">1 pacote</option>
-                            <option value="1 litro">1 litro</option>
-                        </select>
-                    </label>
-
-                    <label>Quantidade: 
-                        <div class="caixa-suspensa">
-                            <div id="qtd-cabecalho-${i.id}" class="caixa-suspensa-cabecalho" onclick="alternarCaixaSuspensa(${i.id}, 'qtd')">
-                                <span id="qtd-texto-${i.id}">Selecione</span> <span>⌵</span>
-                            </div>
-                            <div id="qtd-lista-${i.id}" class="caixa-suspensa-lista">
-                                ${htmlOpcoesQtd}
-                            </div>
-                        </div>
-                        <input type="hidden" id="qtd-val-${i.id}" value="" onchange="verificarCamposObrigatorios(${i.id})">
-                    </label>
-
-                    <label>Duração estimada: 
-                        <div class="caixa-suspensa">
-                            <div id="dur-cabecalho-${i.id}" class="caixa-suspensa-cabecalho" onclick="alternarCaixaSuspensa(${i.id}, 'dur')">
-                                <span id="dur-texto-${i.id}">Selecione</span> <span>⌵</span>
-                            </div>
-                            <div id="dur-lista-${i.id}" class="caixa-suspensa-lista">
-                                ${htmlOpcoesDur}
-                            </div>
-                        </div>
-                        <input type="hidden" id="dur-val-${i.id}" value="" onchange="verificarCamposObrigatorios(${i.id})">
-                    </label>
-
-                    <label>Data de compra: 
-                        <input type="date" id="datacompra-${i.id}" value="${dataCompraValor}">
-                    </label>
-
-                    <label>Prazo de validade: 
-                        <input type="date" id="val-${i.id}">
-                    </label>
-                </div>
-
-                <button id="botao-adicionar-${i.id}" class="botao-adicionar-despensa" onclick="enviarParaDespensa(${i.id})">Adicionar</button>
-            </div>
-        `;
+function atualizarAlertasComprados() {
+    const alertas = obterListaCompras().filter(item => item.comprado && calcularAlertaComprado(item)).length;
+    ['alerta-comprados-inicio', 'alerta-comprados-aba'].forEach(id => {
+        const indicador = document.getElementById(id);
+        if (!indicador) return;
+        indicador.hidden = alertas === 0;
+        indicador.textContent = alertas > 9 ? '9+' : String(alertas);
+        indicador.setAttribute('aria-label', `${alertas} ${alertas === 1 ? 'produto precisa' : 'produtos precisam'} de atenção`);
     });
 }
 
-function alternarCaixaSuspensa(id, tipo) {
-    document.querySelectorAll('.caixa-suspensa-lista').forEach(l => {
-        if (l.id !== tipo + '-lista-' + id) l.classList.remove('aberta');
-    });
-    const lista = document.getElementById(tipo + '-lista-' + id);
-    if (lista) lista.classList.toggle('aberta');
+function normalizarBuscaComprados(texto) {
+    return String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR').trim();
 }
 
-function selecionarOpcao(id, tipo, valor) {
-    const textoEl = document.getElementById(tipo + '-texto-' + id);
-    if (textoEl) textoEl.innerText = valor;
-    const inputOculto = document.getElementById(tipo + '-val-' + id);
-    if (inputOculto) inputOculto.value = valor;
-    const lista = document.getElementById(tipo + '-lista-' + id);
-    if (lista) lista.classList.remove('aberta');
-    verificarCamposObrigatorios(id);
-}
-
-function verificarCamposObrigatorios(id) {
-    const unidade = document.getElementById('unidade-' + id)?.value;
-    const quantidade = document.getElementById('qtd-val-' + id)?.value;
-    const duracao = document.getElementById('dur-val-' + id)?.value;
-    const botao = document.getElementById('botao-adicionar-' + id);
-    if (!botao) return;
-
-    if (unidade && quantidade && duracao) {
-        botao.classList.add('pronto');
-    } else {
-        botao.classList.remove('pronto');
-    }
-}
-
-// Fecha menus suspensos ao clicar fora
-window.addEventListener('click', function(evento) {
-    if (!evento.target.closest('.caixa-suspensa')) {
-        document.querySelectorAll('.caixa-suspensa-lista').forEach(l => l.classList.remove('aberta'));
-    }
-});
-
-/**
- * Reverte um item comprado de volta para a Lista de Compras pendente
- * @param {number} id 
- */
-function reverterParaLista(id) {
-    const lista = obterListaCompras();
-    const item = lista.find(i => i.id === id);
-    if (item) {
-        item.comprado = false;
-        item.selecionado = false;
-        salvarListaComprasCompleta(lista);
-        renderComprados();
-    }
-}
-
-/**
- * Captura os dados do formulário de comprados, valida e envia para a Despensa (LocalStorage)
- * @param {number} id 
- */
-function enviarParaDespensa(id) {
-    const lista = obterListaCompras();
-    const item = lista.find(i => i.id === id);
-    if (!item) return;
-
-    const unidade = document.getElementById('unidade-' + id)?.value;
-    const quantidade = document.getElementById('qtd-val-' + id)?.value;
-    const duracao = document.getElementById('dur-val-' + id)?.value;
-    const dataCompraInput = document.getElementById('datacompra-' + id)?.value;
-    const validadeInput = document.getElementById('val-' + id)?.value;
-
-    if (!unidade || !quantidade || !duracao) {
-        alert('Por favor, selecione Unidade, Quantidade e Duração estimada antes de adicionar.');
-        return;
-    }
-
-    // Formata data de atualização/compra para exibição DD/MM/AAAA
-    let dataAtualizacao = '';
-    if (dataCompraInput) {
-        const partes = dataCompraInput.split('-');
-        if (partes.length === 3) {
-            dataAtualizacao = `${partes[2]}/${partes[1]}/${partes[0]}`;
-        }
-    }
-    if (!dataAtualizacao) {
-        const hoje = new Date();
-        const dia = String(hoje.getDate()).padStart(2, '0');
-        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-        dataAtualizacao = `${dia}/${mes}/${hoje.getFullYear()}`;
-    }
-
-    // Salva na Despensa usando a função limpa de persistência
-    salvarProduto({
-        id: Date.now(),
-        nome: item.nome,
-        unidade: `${quantidade}x ${unidade}`,
-        categoria: item.categoria || 'Alimentos',
-        status: 'estoque',
-        duracao: duracao,
-        atualizacao: dataAtualizacao,
-        validade: validadeInput || ''
-    });
-
-    // Remove o item da lista de compras
-    removerItemLista(id);
-
-    // Re-renderiza a tela de Comprados
+function filtrarComprados() {
     renderComprados();
 }
 
+function renderComprados() {
+    const container = document.getElementById('lista-comprados-container');
+    const contador = document.getElementById('comprados-contador');
+    if (!container || !contador) return;
+    const comprados = obterListaCompras().filter(item => item.comprado);
+    const busca = normalizarBuscaComprados(document.getElementById('busca-comprados')?.value);
+    const encontrados = busca ? comprados.filter(item => normalizarBuscaComprados(item.nome).includes(busca)) : comprados;
+    contador.textContent = busca
+        ? `${encontrados.length} ${encontrados.length === 1 ? 'resultado encontrado' : 'resultados encontrados'}`
+        : `${comprados.length} ${comprados.length === 1 ? 'item comprado' : 'itens comprados'}`;
+    container.innerHTML = '';
+
+    if (!comprados.length) {
+        container.innerHTML = '<div class="comprados-vazio"><img src="imagens/comprados.png" alt=""><p>Nenhum produto comprado por enquanto.</p><span>Finalize as compras na Lista de Compras para encontrá-las aqui.</span></div>';
+        atualizarAlertasComprados();
+        return;
+    }
+    if (!encontrados.length) {
+        container.innerHTML = '<div class="comprados-vazio"><p>Nenhum produto encontrado.</p><span>Tente buscar por outro nome.</span></div>';
+        atualizarAlertasComprados();
+        return;
+    }
+
+    encontrados.forEach(item => {
+        const nome = escaparHtml(item.nome);
+        const categoria = escaparHtml(item.categoria || 'Alimentos');
+        const nomeSlug = String(item.nome || '').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        const alerta = calcularAlertaComprado(item);
+        const quantidadeExibicao = item.quantidade ? escaparHtml(item.quantidade) + (item.unidade ? ` × ${escaparHtml(item.unidade)}` : '') : 'Não informada';
+        const validadeExibicao = item.validade ? (formatarDataISO(item.validade) || 'Não informada') : 'Não informada';
+        const id = Number(item.id);
+
+        container.innerHTML += `
+            <div class="comprado-item-row ${alerta ? 'comprado-com-alerta' : ''}">
+                ${alerta ? `<div class="alerta-comprado-etiqueta" role="status"><span class="alerta-simbolo">!</span>${escaparHtml(alerta)}</div>` : ''}
+                <div class="comprado-item-topo">
+                    <div class="comprado-item-produto">
+                        <div class="despensa-circle-img">
+                            <img src="imagens/${nomeSlug}.png" alt="${nome}" onerror="this.onerror=null;this.src='imagens/cesta.png'">
+                        </div>
+                        <div class="comprado-item-textos">
+                            <h4>${nome}</h4>
+                            <span>${categoria}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="comprado-item-resumo">
+                    <div class="comprado-resumo-dado">
+                        <span>Quantidade</span>
+                        <strong>${quantidadeExibicao}</strong>
+                    </div>
+                    <div class="comprado-resumo-dado">
+                        <span>Validade</span>
+                        <strong>${validadeExibicao}</strong>
+                    </div>
+                </div>
+                <div class="comprado-item-acoes">
+                    <button type="button" class="botao-editar-comprado" onclick="abrirModalComprado(${id}, 'editar')">Editar informações</button>
+                    <button type="button" class="botao-acabou-comprado" onclick="marcarCompradoAcabou(${id})">Marcar que acabou</button>
+                </div>
+            </div>
+        `;
+    });
+    atualizarAlertasComprados();
+}
+
+function iniciarFinalizacaoCompras(ids) {
+    filaFinalizacaoCompras = [...ids];
+    abrirProximoItemComprado();
+}
+
+function abrirProximoItemComprado() {
+    while (filaFinalizacaoCompras.length) {
+        const id = filaFinalizacaoCompras[0];
+        const item = obterListaCompras().find(i => String(i.id) === String(id) && !i.comprado && i.selecionado);
+        if (item) {
+            abrirModalComprado(id, 'lista');
+            return;
+        }
+        filaFinalizacaoCompras.shift();
+    }
+    mudarTela('comprados');
+}
+
+function abrirModalComprado(id, origem) {
+    const item = origem === 'despensa'
+        ? obterProdutos().find(p => String(p.id) === String(id))
+        : obterListaCompras().find(i => String(i.id) === String(id));
+    if (!item) return;
+    modalCompradoAtual = { id, origem };
+    document.getElementById('modal-comprado-titulo').textContent = origem === 'editar' ? 'Editar informações' : 'Produto comprado';
+    document.getElementById('modal-comprado-nome').textContent = item.nome;
+
+    const emEdicao = origem === 'editar';
+    const campoData = document.getElementById('comprado-data-compra');
+    campoData.value = emEdicao ? (item.dataCompra || '') : '';
+    document.getElementById('comprado-validade').value = emEdicao ? (item.validade || '') : '';
+    document.getElementById('comprado-unidade').innerHTML = '<option value="">Selecione</option>' + criarOpcoes(opcoesUnidadeComprados, emEdicao ? item.unidade : '');
+    document.getElementById('comprado-quantidade').innerHTML = '<option value="">Selecione</option>' + criarOpcoes(Array.from({ length: 20 }, (_, indice) => String(indice + 1)), emEdicao ? item.quantidade : '');
+    document.getElementById('comprado-duracao').innerHTML = '<option value="">Selecione</option>' + criarOpcoes(opcoesDuracaoComprados, emEdicao ? item.duracao : '');
+
+    const modal = document.getElementById('modal-comprado');
+    modal.style.display = 'flex';
+    modal.setAttribute('aria-hidden', 'false');
+    campoData.focus();
+}
+
+function fecharModalComprado(cancelarFila = true) {
+    const modal = document.getElementById('modal-comprado');
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+    modalCompradoAtual = null;
+    if (cancelarFila) filaFinalizacaoCompras = [];
+    renderListaCompras();
+    atualizarAlertasComprados();
+}
+
+function clicarForaModalComprado(evento) {
+    if (evento.target === document.getElementById('modal-comprado')) fecharModalComprado();
+}
+
+function salvarFormularioComprado(evento) {
+    evento.preventDefault();
+    if (!modalCompradoAtual) return;
+    const { id, origem } = modalCompradoAtual;
+    const dados = {
+        dataCompra: document.getElementById('comprado-data-compra').value,
+        validade: document.getElementById('comprado-validade').value,
+        unidade: document.getElementById('comprado-unidade').value,
+        quantidade: document.getElementById('comprado-quantidade').value,
+        duracao: document.getElementById('comprado-duracao').value
+    };
+    if (dataISOEmDias(dados.dataCompra) === null || !dados.unidade || !dados.quantidade || !dados.duracao) {
+        document.getElementById('form-comprado').reportValidity();
+        return;
+    }
+
+    if (origem === 'despensa') {
+        const produto = obterProdutos().find(p => String(p.id) === String(id));
+        if (!produto) return;
+        salvarItemLista({ id: proximoIdComprado(), nome: produto.nome, categoria: produto.categoria || 'Alimentos', selecionado: false, comprado: true, ...dados });
+        removerProduto(id);
+    } else {
+        const lista = obterListaCompras();
+        const item = lista.find(i => String(i.id) === String(id));
+        if (!item) return;
+        Object.assign(item, dados, { comprado: true, selecionado: false });
+        salvarListaComprasCompleta(lista);
+    }
+
+    const temFila = origem === 'lista' && filaFinalizacaoCompras.length > 0;
+    if (temFila) filaFinalizacaoCompras.shift();
+    fecharModalComprado(false);
+    renderComprados();
+    if (origem === 'despensa') {
+        renderDespensa();
+        mudarTela('comprados');
+    } else if (temFila) {
+        abrirProximoItemComprado();
+    }
+}
+
+function proximoIdComprado() {
+    const ids = obterListaCompras().map(item => Number(item.id)).filter(Number.isFinite);
+    return Math.max(Date.now(), 1, ...ids.map(id => id + 1));
+}
+
+function marcarCompradoAcabou(id) {
+    const lista = obterListaCompras();
+    const item = lista.find(produto => String(produto.id) === String(id) && produto.comprado);
+    if (!item) return;
+    item.comprado = false;
+    item.selecionado = false;
+    delete item.dataCompra;
+    delete item.validade;
+    delete item.unidade;
+    delete item.quantidade;
+    delete item.duracao;
+    salvarListaComprasCompleta(lista);
+    renderComprados();
+    renderListaCompras();
+    atualizarAlertasComprados();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    atualizarAlertasComprados();
+});
+
+window.addEventListener('focus', () => {
+    atualizarAlertasComprados();
+    if (document.getElementById('tela-comprados').classList.contains('ativo')) renderComprados();
+});
+
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        atualizarAlertasComprados();
+        if (document.getElementById('tela-comprados').classList.contains('ativo')) renderComprados();
+    }
+});
+
+setInterval(() => {
+    atualizarAlertasComprados();
+    if (document.getElementById('tela-comprados').classList.contains('ativo')) renderComprados();
+}, 600000);

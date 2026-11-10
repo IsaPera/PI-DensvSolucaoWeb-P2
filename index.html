@@ -56,8 +56,9 @@
                     </div>
 
                     <div class="cartao-menu" onclick="mudarTela('comprados')">
-                        <div class="cartao-circulo-icone">
+                        <div class="cartao-circulo-icone icone-comprados-alerta">
                             <img src="imagens/comprados.png" alt="Comprados">
+                            <span id="alerta-comprados-inicio" class="alerta-comprados-contador" aria-label="Alertas de produtos comprados" hidden></span>
                         </div>
                         <div class="cartao-textos">
                             <h3>Comprados</h3>
@@ -98,10 +99,6 @@
                         <span class="seta-voltar" onclick="mudarTela('inicio')"> ⮜ </span>
                         <h2 class="titulo-pagina-simples">Lista de Compras</h2>
                     </div>
-                    <div class="bloco-data-compra">
-                        <span>Data da compra:</span>
-                        <input type="date" id="input-data-compra">
-                    </div>
                 </div>
 
                 <div style="padding: 14px;">
@@ -120,6 +117,15 @@
                     <div class="titulo-com-voltar">
                         <span class="seta-voltar" onclick="mudarTela('inicio')"> ⮜ </span>
                         <h2 class="titulo-pagina-simples">Comprados</h2>
+                    </div>
+                </div>
+
+                <div class="comprados-informativo">
+                    <p id="comprados-contador"></p>
+                    <span>Edite os dados dos itens ou marque quando acabarem.</span>
+                    <div class="caixa-busca-envoltoria busca-comprados-envoltoria">
+                        <span class="icone-lupa" aria-hidden="true">🔎︎</span>
+                        <input type="search" id="busca-comprados" placeholder="Buscar produto comprado..." aria-label="Buscar produto comprado" autocomplete="off" oninput="filtrarComprados()">
                     </div>
                 </div>
 
@@ -142,9 +148,48 @@
                 <span>Lista de <br> compras</span>
             </button>
             <button class="botao-navegacao-aba" onclick="mudarTela('comprados')">
-                <img src="imagens/comprados.png" alt="Comprados">
+                <span class="icone-comprados-alerta">
+                    <img src="imagens/comprados.png" alt="Comprados">
+                    <span id="alerta-comprados-aba" class="alerta-comprados-contador" aria-label="Alertas de produtos comprados" hidden></span>
+                </span>
                 <span>Comprados</span>
             </button>
+        </div>
+        <div id="modal-comprado" class="sobreposicao-modal modal-comprado" role="dialog" aria-modal="true" aria-labelledby="modal-comprado-titulo" aria-hidden="true" onclick="clicarForaModalComprado(event)">
+            <div class="caixa-conteudo-modal caixa-modal-comprado">
+                <button type="button" class="botao-fechar-modal botao-fechar-comprado" onclick="fecharModalComprado()" aria-label="Fechar">&times;</button>
+                <h3 id="modal-comprado-titulo">Informações do produto</h3>
+                <p id="modal-comprado-nome" class="modal-comprado-nome"></p>
+                <form id="form-comprado" onsubmit="salvarFormularioComprado(event)">
+                    <div class="comprado-grid modal-comprado-grid">
+                        <label for="comprado-data-compra">Data da compra
+                            <input id="comprado-data-compra" name="dataCompra" type="date" required>
+                        </label>
+                        <label for="comprado-validade">Prazo de validade
+                            <input id="comprado-validade" name="validade" type="date">
+                        </label>
+                        <label for="comprado-unidade">Unidade
+                            <select id="comprado-unidade" name="unidade" required>
+                                <option value="">Selecione</option>
+                            </select>
+                        </label>
+                        <label for="comprado-quantidade">Quantidade
+                            <select id="comprado-quantidade" name="quantidade" required>
+                                <option value="">Selecione</option>
+                            </select>
+                        </label>
+                        <label for="comprado-duracao" class="campo-duracao-comprado">Duração estimada
+                            <select id="comprado-duracao" name="duracao" required>
+                                <option value="">Selecione</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="modal-comprado-acoes">
+                        <button type="button" class="botao-cancelar-comprado" onclick="fecharModalComprado()">Cancelar</button>
+                        <button type="submit" class="botao-salvar-comprado">Salvar</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 

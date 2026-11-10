@@ -140,25 +140,11 @@ function excluirItemDaLista(id) {
 
 
 function finalizarCompra() {
-    const inputData = document.getElementById('input-data-compra');
-    const dataEscolhida = inputData && inputData.value ? inputData.value : new Date().toISOString().split('T')[0];
+    const selecionados = obterListaCompras()
+        .filter(item => item.selecionado && !item.comprado)
+        .map(item => item.id);
 
-    const lista = obterListaCompras();
-    let alterou = false;
-
-    lista.forEach(item => {
-        if (item.selecionado && !item.comprado) {
-            item.comprado = true;
-            item.selecionado = false; // Desmarca para não ficar checado no futuro
-            item.dataCompra = dataEscolhida;
-            alterou = true;
-        }
-    });
-
-    if (alterou) {
-        salvarListaComprasCompleta(lista);
-        // Redireciona para a tela de Comprados
-        mudarTela('comprados');
+    if (selecionados.length) {
+        iniciarFinalizacaoCompras(selecionados);
     }
 }
-
