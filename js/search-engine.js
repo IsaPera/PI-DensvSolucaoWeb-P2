@@ -1,19 +1,21 @@
 
 //createLists([subjects2,subjects],['title','title'])
-function createLists(lists,attributes,pesquisas) {
-window.lists = [...lists]
-podeir = [] // outro reset de navegação
-window.attributes = attributes// atributos que contêm os textos a serem buscados em cada array
-window.pesquisas = [...pesquisas]
+function createLists(original_lists,rattributes,rpesquisas) {
+let lists = [...original_lists]
+let attributes = rattributes// atributos que contêm os textos a serem buscados em cada array
+let pesquisas = [...rpesquisas]
 for (list in lists) {
-    console.log('list',lists[list])
+    //console.log('list',lists[list])
     // código para sortear os textos primeiro por quantidade de palavras e depois alfabeticamente
     lists[list] = sortWords(sortWordsByNumber(lists[list], attributes[list]),attributes[list])
-    podeir.push(true)
     console.log('list2',lists[list])
 }
 
-startEngine()
+//startEngine()
+for (let s = 0; s < lists.length; s++) {
+    lists[s] = sortWords(sortWordsByNumber(lists[list], attributes[list]),attributes[list])
+    search(lists[s], attributes[s], s, pesquisas[s])
+}
 
 }
 
@@ -27,12 +29,13 @@ for (let s = 0; s < lists.length; s++) {
 
 
 function search(opcoes,titleProperty,searcherIndex,pesquisa) {   
-    console.log('LOGGG',opcoes)
-    subjects = [...opcoes]
-    window.results = []
+    //console.log('LOGGG',opcoes)
+    let subjects = [...opcoes]
+    results = []
+    pesquisa = pesquisa.toLowerCase()
 
       for (n in subjects) {
-        index_found = subjects[n][titleProperty].search(new RegExp(`${pesquisa}`,"gi"))
+        let index_found = subjects[n][titleProperty].search(new RegExp(`${pesquisa}`,"gi"))
         if (index_found > -1) {
             subjects[n].index_found = subjects[n][titleProperty].search(new RegExp(`${pesquisa}`,"gi"))
         }else{
@@ -45,35 +48,31 @@ function search(opcoes,titleProperty,searcherIndex,pesquisa) {
     // índice em 'abacate' = 0
     // índice em 'tangerina' = 1
     subjects = sortob(subjects, 'index_found')
-    console.log('SUBJECTS AFTER INDEX',subjects)
+    //console.log('SUBJECTS AFTER INDEX',subjects)
 
     for (n in subjects) { 
-         pesquise = pesquisa.toLowerCase()
-         //subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquise,'(?<=^|\\W)')
-         if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquise}`,"gi")) != -1 && pesquise.length != 0) {
+         //subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquisa,'(?<=^|\\W)')
+         if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquisa}`,"gi")) != -1 && pesquisa.length != 0) {
             //console.log('pushar esse (1)', subjects[n][titleProperty])
              results.push(subjects[n])
-             subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquise,'(?<=^)')
+             subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquisa,'(?<=^)')
          } }
-    if (pesquise.length != 0) {
+    if (pesquisa.length != 0) {
         for (n in subjects) {
-             pesquise = pesquisa.toLowerCase()
-             if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquise}`,"gi")) == -1 && subjects[n][titleProperty].search(new RegExp(`(?<!([a-z]|[ãáàâéêóõôíúç]))${pesquise}`,"gi")) != -1 && pesquise.length != 0) {
+             if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquisa}`,"gi")) == -1 && subjects[n][titleProperty].search(new RegExp(`(?<!([a-z]|[ãáàâéêóõôíúç]))${pesquisa}`,"gi")) != -1 && pesquisa.length != 0) {
                  //console.log('pushar esse (2)', subjects[n][titleProperty])
                 results.push(subjects[n])
-                subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquise,'(?<!([a-z]|[ãáàâéêóõôíúç]))')
+                subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquisa,'(?<!([a-z]|[ãáàâéêóõôíúç]))')
              }}}
- if (pesquise.length != 0){
+ if (pesquisa.length != 0){
     for (n in subjects) {
-         pesquise = pesquisa.toLowerCase()
-         if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquise}`,"gi")) == -1 && subjects[n][titleProperty].search(new RegExp(`(?<!([a-z]|[ãáàâéêóõôíúç]))${pesquise}`,"gi")) == -1 && subjects[n][titleProperty].search(new RegExp(`${pesquise}`,"gi")) != -1 && pesquise.length != 0) {
+         if (subjects[n][titleProperty].search(new RegExp(`(?<=^)${pesquisa}`,"gi")) == -1 && subjects[n][titleProperty].search(new RegExp(`(?<!([a-z]|[ãáàâéêóõôíúç]))${pesquisa}`,"gi")) == -1 && subjects[n][titleProperty].search(new RegExp(`${pesquisa}`,"gi")) != -1 && pesquisa.length != 0) {
             //console.log('FOI ESSE',subjects[n][titleProperty])
              //console.log('pushar esse (3)', subjects[n][titleProperty])
             results.push(subjects[n])
-            subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquise,'')
+            subjects[n].innertext = searchInnertext(subjects[n][titleProperty],pesquisa,'')
          }}}
 
-         //console.log('results',results)
  }
 
 
@@ -181,9 +180,9 @@ return newlista
 // Ordena os objetos numericamente por propriedade
 // os textos pelo índice de busca
 function sortob(n, pam, pim) {
-    var maiorparamenor = []
-    var posiçõesnumeros = []
-    var yposition = n
+    let maiorparamenor = []
+    let posiçõesnumeros = []
+    let yposition = n
 
     for (n in yposition) {
         maiorparamenor[n] = {}
@@ -193,13 +192,13 @@ function sortob(n, pam, pim) {
     }
 
     for (item in yposition) {
-        var volume = 0
-        var dn = 0
+        let volume = 0
+        let dn = 0
         for (volume in yposition) {
             if (dn == 0) {
                 if (yposition[item][pam] < maiorparamenor[volume][pam] || yposition[item][pam] == maiorparamenor[volume][pam] && yposition[item][pim] < maiorparamenor[volume][pim]) {
-                    var itens = yposition.length - (Number(volume) + 1)
-                    var leng = yposition.length
+                    let itens = yposition.length - (Number(volume) + 1)
+                    let leng = yposition.length
 
                     for (c = 0; c < itens; c++) {
                         maiorparamenor[Number(leng) - 1] = maiorparamenor[Number(leng) - 2]
@@ -219,10 +218,10 @@ function sortob(n, pam, pim) {
 // Ordena os textos por quantidade de palavras
 function sortWordsByNumber(palavrasPrimitivas,s) {
 for (palavra in palavrasPrimitivas) {
-    word = palavrasPrimitivas[palavra][s]
-    break_word = ''
-    words_number = 0
-    word_right_spaced = ''
+    let word = palavrasPrimitivas[palavra][s]
+    let break_word = ''
+    let words_number = 0
+    let word_right_spaced = ''
     word += ' '
     for (car in word) {
         if (word[car] != ' ') {
@@ -256,6 +255,7 @@ let countindex = 0
 
 for (char = 0; char < text_changed.length; char++) {
     if (text_changed[char] == '/') {
+        let trecho
         if (char > 0) {
           trecho = text_changed[char - 1] + text_changed.slice(char + 1, char + 1 + busca.length)
         }else{
