@@ -200,7 +200,7 @@ function sortob(n, index1, index2) {
 }
 
 // Ordena os textos por quantidade de palavras
-function sortWordsByNumber(palavrasPrimitivas,s) {
+function sortTextByWords(palavrasPrimitivas,s) {
 for (let palavra in palavrasPrimitivas) {
     let word = palavrasPrimitivas[palavra][s]
     let break_word = ''
