@@ -5,12 +5,12 @@ let attributes = rattributes// atributos que contêm os textos a serem buscados 
 let pesquisas = [...rpesquisas]
 for (let list in lists) {
     // código para sortear os textos primeiro por quantidade de palavras e depois alfabeticamente
-    lists[list] = sortWords(sortWordsByNumber(lists[list], attributes[list]),attributes[list])
+    lists[list] = sortWords(sortTextByWords(lists[list], attributes[list]),attributes[list])
 }
 
 let results = []
 for (let s = 0; s < lists.length; s++) {
-    lists[s] = sortWords(sortWordsByNumber(lists[s], attributes[s]),attributes[s])
+    lists[s] = sortWords(sortTextByWords(lists[s], attributes[s]),attributes[s])
      results.push(search(lists[s], attributes[s], pesquisas[s]))
 }
 
